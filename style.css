@@ -207,3 +207,14 @@ main {
     align-items: center; 
     width: 100%;
 }
+
+.headerInterno{
+    background-color: #FF8810;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 10px 20px;
+    width: 100%;
+    gap : 20px;
+    padding-left: 10px;
+}
