@@ -175,3 +175,35 @@ form{
 p{
     font-family: sans-serif;
 }
+
+
+header {
+    background-color: #FF8810;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 10px 20px;
+    width: 100%;
+    gap : 20px;
+    padding-left: 10px;
+}
+
+main {
+    padding: 40px 20px;
+}
+
+
+.bloco {
+  display: flex;
+  align-items: center;  
+  justify-content: flex-start;
+  gap: 60px;              
+  margin: 40px 0;
+}
+
+.divLanding{
+    display: flex;
+    flex-direction: column;
+    align-items: center; 
+    width: 100%;
+}
