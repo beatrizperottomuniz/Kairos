@@ -1,0 +1,96 @@
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="..." crossorigin="anonymous" referrerpolicy="no-referrer" />
+        <link rel="stylesheet" href="../style.css">
+    </head>
+
+    <body>
+        <div class = "divCadastro">
+
+            <h1 class = "textoTitulo">Faça sua conta</h1>
+            <p class = "textoDestaque">Se registre como profissional e aumente sua renda</p>
+
+            <div class = "divMediaLoginCadastro">
+                <div class = "divMediaLoginCadastro">
+                    <form id="formCadastroProfissional">
+                        <label for="nome" class="textoDestaque">Nome</label>
+                        <input class= "campoInput" type="text" placeholder="Insira seu nome" id="nome">
+                        <label for="email" class="textoDestaque">Email</label>
+                        <input class= "campoInput" type="text" placeholder="Insira seu email" id="email">
+                        <label for="email" class="textoDestaque"> Senha</label>
+                        <input class= "campoInput" type="password" placeholder="Insira sua senha" id="senha">
+                        <label for="especialidade" class="textoDestaque">Especialidade</label>
+                        <input class= "campoInput" type="text" placeholder="Qual sua especialidade de trabalho" id="especialidade">
+                        <label for="biografia" class="textoDestaque">Biografia curta</label>
+                        <input class= "campoInput" type="text" placeholder="Até uma linha contando quem você é" id="biografia">
+                        <label for="endereco" class="textoDestaque"> Endereço</label>
+                        <input class= "campoInput" type="text" placeholder="Qual seu endereço de atendimento" id="endereco">
+                        <p id="mensagemCadastro"></p>
+
+                        <button type="submit" class="botaoSubmit">Cadastrar</button>
+                    </form>
+                </div>
+
+                <div class = "divMediaLoginCadastro">
+                    <p class = "textoComum">Já possui uma conta?</p>
+                    <a href="../index.html" class="linkPag">Faça login</a>
+                </div>
+            </div>
+
+        </div>
+
+        <script>
+            const formLogin = document.getElementById('formCadastroProfissional');
+            formLogin.addEventListener('submit', function(event) {
+                event.preventDefault(); //n recarrega pag
+                
+                const emailInput = document.getElementById("email").value;
+                const senhaInput = document.getElementById("senha").value;
+                const nomeInput = document.getElementById("nome").value;
+                const especialidadeInput = document.getElementById("especialidade").value;
+                const biografiaInput = document.getElementById("biografia").value;
+                const enderecoInput = document.getElementById("endereco").value;
+                const mensagem = document.getElementById("mensagemCadastro");
+
+                fetch('../phpAPIs/usuarioCadastroProfissional.php', {
+                    //formatando em json e mandando por post
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        nome : nomeInput,
+                        email: emailInput,
+                        senha: senhaInput,
+                        especialidade : especialidadeInput,
+                        biografia: biografiaInput,
+                        endereco: enderecoInput
+                    })
+                })
+                .then(response => response.json())//tratando as promises
+                .then(data => {
+                    if (data.sucesso) {
+                        //cadastro deu certo
+                        mensagem.style.color = 'green';
+                        mensagem.textContent = data.mensagem;
+                        setTimeout(() => {
+                            window.location.href = '../telaPrincipal/index.html'; 
+                        }, 1000);
+                    } else {
+                        //cadastro deu erro
+                        mensagem.style.color = 'red';
+                        mensagem.textContent = data.mensagem;
+                    }
+                })
+                //debug
+                .catch(err => {
+                    console.error("Erro no fetch:", err);
+                    mensagem.style.color = 'red';
+                    mensagem.textContent = "Ocorreu um erro ao tentar fazer cadastro.";
+                });
+            });
+        </script>
+
+    </body>
+</html>

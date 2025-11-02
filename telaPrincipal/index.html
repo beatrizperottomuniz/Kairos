@@ -1,0 +1,60 @@
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <link rel="stylesheet" href="../style.css">
+    </head>
+    <body>
+        <div class="divPrincipal">
+            <h1 class="textoDestaque">Seus agendamentos</h1>
+            
+            <div id="resultado">
+                <p>carregando...</p>
+            </div>
+            
+            <hr>
+            
+            <form method="POST" action="../phpAPIs/usuarioAgendamentos.php">
+                <label for="hora" class="textoDestaque">Hora e dia:</label>
+                <input class="campoInput" type="datetime-local" name="hora_dia">
+                <button type="submit" class="botaoSubmit">Cadastrar agendamento</button>
+            </form>
+        </div>
+
+        <script>
+            function pegarAgendamentos() {
+                fetch("../phpAPIs/usuarioAgendamentos.php")
+                .then(response => response.json())
+                .then(data => {
+                    const resultadoDiv = document.querySelector("#resultado");
+
+                    if (data.sucesso && data.agendamentos.length > 0) {
+                        let html = '<ul>';//lista
+                        data.agendamentos.forEach(ag => {
+                            const dataFormatada = new Date(ag.data_hora_inicio).toLocaleString('pt-BR');
+                            html += `<li>
+                                <p class="textoDestaque">${ag.nome_servico}</p> 
+                                <p class="textoComum">com ${ag.nome_profissional}</p>
+                                <p class="textoComum">Em: ${dataFormatada}</p>
+                            </li>`;//elemento da lista
+                        });
+                        html += '</ul>';
+                        resultadoDiv.innerHTML = html;
+                    } else if (data.sucesso) {
+                        resultadoDiv.textContent = "Você não tem agendamentos";
+                    } else {
+                        resultadoDiv.style.color = 'red';
+                        resultadoDiv.textContent = "erro: ${data.mensagem}";
+                    }
+                })
+                .catch(err => {
+                    console.error("Erro no fetch:", err);
+                    const resultadoDiv = document.querySelector("#resultado");
+                    resultadoDiv.style.color = 'red';
+                    resultadoDiv.textContent = "erro ao carregar os dados";
+                });                 
+            }
+
+            document.addEventListener('DOMContentLoaded', pegarAgendamentos);//chama no carregamento
+        </script>
+    </body>
+</html>
