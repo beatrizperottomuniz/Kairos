@@ -1,0 +1,80 @@
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="..." crossorigin="anonymous" referrerpolicy="no-referrer" />
+        <link rel="stylesheet" href="../style.css">
+    </head>
+
+    <body>
+        <div class = "divLogin">
+
+            <h1 class = "textoTitulo">Bem vindo de volta</h1>
+            <p class = "textoDestaque">Faça login em sua conta</p>
+
+            <div class = "divMediaLoginCadastro">
+                <div class = "divMediaLoginCadastro">
+                    <form id="formLogin">
+                        <label for="email" class="textoDestaque">Email</label>
+                        <input class= "campoInput" type="text" placeholder="Insira seu email" id="email">
+                        <label for="email" class="textoDestaque"> Senha</label>
+                        <input class= "campoInput" type="password" placeholder="Insira sua senha" id="senha">
+                        <p id="mensagemLogin"></p>
+                        <button type="submit" class="botaoSubmit">Login</button>
+                    </form>
+                </div>
+
+                <div class = "divMediaLoginCadastro">
+                    <p class = "textoComum">Não possui conta ? Crie uma como :</p>
+                    <a href="../cadastrarProfissional/index.html" class="linkPag">Profissional</a>
+                    <a href="../cadastrarCliente/index.html" class="linkPag">Cliente</a>
+                </div>
+            </div>
+
+        </div>
+
+        <script>
+            const formLogin = document.getElementById('formLogin');
+            formLogin.addEventListener('submit', function(event) {
+                event.preventDefault(); //n recarrega pag
+                
+                const emailInput = document.getElementById("email").value;
+                const senhaInput = document.getElementById("senha").value;
+                const mensagem = document.getElementById("mensagemLogin");
+
+                fetch('../phpAPIs/usuarioLogin.php', {
+                    //formatando em json e mandando por post
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: emailInput,
+                        senha: senhaInput
+                    })
+                })
+                .then(response => response.json())//tratando as promises
+                .then(data => {
+                    if (data.sucesso) {
+                        //login deu certo
+                        mensagem.style.color = 'green';
+                        mensagem.textContent = data.mensagem;
+                        setTimeout(() => {
+                            window.location.href = '../telaPrincipal/index.html'; 
+                        }, 1000);
+                    } else {
+                        //login deu erro
+                        mensagem.style.color = 'red';
+                        mensagem.textContent = data.mensagem;
+                    }
+                })
+                //debug
+                .catch(err => {
+                    console.error("Erro no fetch:", err);
+                    mensagem.style.color = 'red';
+                    mensagem.textContent = "Ocorreu um erro ao tentar fazer login.";
+                });
+            });
+        </script>
+
+    </body>
+</html>
