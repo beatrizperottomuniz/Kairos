@@ -26,7 +26,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 
     // prepared statement
-    $stmt = $conn->prepare("SELECT id_usuario, nome, senha FROM Usuario WHERE email = ?");
+    $stmt = $conn->prepare("SELECT id_usuario, nome, senha,tipo_conta FROM Usuario WHERE email = ?");
     $stmt->bind_param("s", $email);
     $stmt->execute();
     $resultado = $stmt->get_result();
@@ -39,7 +39,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $_SESSION['id_usuario'] = $usuario['id_usuario'];
             $_SESSION['nome_usuario'] = $usuario['nome'];
             
-            echo json_encode(['sucesso' => true, 'mensagem' => 'Login realizado com sucesso!']);
+            echo json_encode(['sucesso' => true, 'mensagem' => 'Login realizado com sucesso!','tipo_conta' => $usuario['tipo_conta']]);
         } else {
             echo json_encode(['sucesso' => false, 'mensagem' => 'Email ou senha incorretos.']);
         }

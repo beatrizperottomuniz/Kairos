@@ -59,7 +59,12 @@
                         mensagem.style.color = 'green';
                         mensagem.textContent = data.mensagem;
                         setTimeout(() => {
-                            window.location.href = '../telaPrincipal/index.html'; 
+                            if (data.tipo_conta == "profissional"){
+                                window.location.href = '../telaPrincipalProfissional/index.html'; 
+                            }
+                            else{
+                                window.location.href = '../telaPrincipalCliente/index.html'; 
+                            }
                         }, 1000);
                     } else {
                         //login deu erro
