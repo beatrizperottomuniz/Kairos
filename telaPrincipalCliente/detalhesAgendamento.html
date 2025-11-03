@@ -1,0 +1,53 @@
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <link rel="stylesheet" href="../style.css">
+    </head>
+
+    <body>
+        <h1>Detalhes do Agendamento</h1>
+        <p><strong>Data:</strong> <span id="data"></span></p>
+        <p><strong>Hora início:</strong> <span id="horaInicio"></span></p>
+        <p><strong>Hora fim:</strong> <span id="horaFim"></span></p>
+        <p><strong>Cliente:</strong> <span id="cliente"></span></p>
+        <p><strong>Serviço:</strong> <span id="servico"></span></p>
+        <p><strong>Status:</strong> <span id="status"></span></p>
+
+
+
+        <script>
+
+            document.addEventListener("DOMContentLoaded", function() {
+                // pega o id que veio na URL, ex: detalhesAgendamento.html?id=7
+                const params = new URLSearchParams(window.location.search);
+                const id = params.get("id");
+
+                if (!id) {
+                    document.body.innerHTML = "<p>Agendamento não encontrado.</p>";
+                    return;
+                }
+
+                fetch(`../phpAPIs/CRUD_agendamento/getAgendamento.php?id=${id}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.sucesso) {
+                            const ag = data.agendamento;
+                            document.getElementById("data").textContent = new Date(ag.data_hora_inicio).toLocaleDateString("pt-BR");
+                            document.getElementById("horaInicio").textContent = new Date(ag.data_hora_inicio).toLocaleTimeString("pt-BR");
+                            document.getElementById("horaFim").textContent = new Date(ag.data_hora_fim).toLocaleTimeString("pt-BR");
+                            document.getElementById("cliente").textContent = ag.nome_cliente;
+                            document.getElementById("servico").textContent = ag.nome_servico;
+                            document.getElementById("status").textContent = ag.status;
+                        } else {
+                            document.body.innerHTML = `<p>Erro: ${data.mensagem}</p>`;
+                        }
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        document.body.innerHTML = "<p>Erro ao carregar os detalhes.</p>";
+                    });
+            });
+
+        </script>
+    </body>
+</html>
