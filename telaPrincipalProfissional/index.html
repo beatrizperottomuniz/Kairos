@@ -15,42 +15,77 @@
         </header>
 
         <div class="divPrincipal">
-            <h1 class="textoDestaque">Seus agendamentos de profissional</h1>
+            <p class="textoTitulo">Seus agendamentos</p>
+            <p class = "textoDestaque" style=" margin-bottom: 5px;">Dia</p>
+            <div class="duplaBotoes">
+                <input type="date" class="campoInput" id="filtro" style="width: 200px; height: 30px;">
+                <button class="botaoSubmit" id="btn_filtro" style=" margin-top: 5px; height:30px; width: 100px;">Filtrar</button>
+                <button class="botaoSubmit" id="limpar" style=" margin-top: 5px; height: 30px; width: 100px;">Limpar</button>
+            </div>
             
             <div id="resultado">
                 <p>carregando...</p>
             </div>
             
-            <hr>
-            
-            <form method="POST" action="../phpAPIs/usuarioAgendamentos.php">
-                <label for="hora" class="textoDestaque">Hora e dia:</label>
-                <input class="campoInput" type="datetime-local" name="hora_dia">
-                <button type="submit" class="botaoSubmit">Cadastrar agendamento</button>
-            </form>
         </div>
 
         <script>
             function pegarAgendamentos() {
-                fetch("../phpAPIs/usuarioAgendamentos.php")
+                const filtroData = document.getElementById("filtro").value;
+
+                let url = "../phpAPIs/usuarioAgendamentosProfissional.php";
+
+                // se data adicionada = coloca na Url
+                if (filtroData) {
+                    url += `?data=${filtroData}`; 
+                }
+
+                fetch(url)
                 .then(response => response.json())
                 .then(data => {
                     const resultadoDiv = document.querySelector("#resultado");
+                    resultadoDiv.innerHTML = ''; 
 
                     if (data.sucesso && data.agendamentos.length > 0) {
-                        let html = '<ul>';//lista
+                        let html = '<ul>';
                         data.agendamentos.forEach(ag => {
-                            const dataFormatada = new Date(ag.data_hora_inicio).toLocaleString('pt-BR');
+                            const dataFormatada_inicio = new Date(ag.data_hora_inicio).toLocaleDateString('pt-BR', {
+                            day: '2-digit', month: '2-digit', year: 'numeric'
+                            });
+                            
+                            let botaoConcluido = "";
+                            if (ag.status === "Concluido") {
+                                botaoConcluido = `<button class="botaoSubmit" disabled style="background-color:#A0A0A0;">Concluído</button>`;
+                            } else {
+                                botaoConcluido = `<button class="botaoSubmit" onclick="concluirAgendamento('${ag.id_agendamento}', this)">Marcar como concluído</button>`;
+                            }
+
+                            const horaFormatada_inicio = new Date(ag.data_hora_inicio).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                            const horaFormatada_fim = new Date(ag.data_hora_fim).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
                             html += `<li>
-                                <p class="textoDestaque">${ag.nome_servico}</p> 
-                                <p class="textoComum">com ${ag.nome_profissional}</p>
-                                <p class="textoComum">Em: ${dataFormatada}</p>
-                            </li>`;//elemento da lista
+                                <div class="divAgendamento">
+                                    <div>
+                                        <p class="textoDestaque">${dataFormatada_inicio}</p> 
+                                        <p class="textoComum">${horaFormatada_inicio} até ${horaFormatada_fim}</p>
+                                        <p class="textoDestaque">${ag.nome_servico}</p> 
+                                        <p class="textoComum">Cliente : ${ag.nome_cliente}</p>
+                                        <p class="textoComum">Duração : ${ag.duracao_minutos} minutos</p>
+                                        <p class="textoComum" id="Agendamento_${ag.id_agendamento}">Situação : ${ag.status}</p>
+                                    </div>
+                                    <div class="duplaBotoesPaginasInternas">
+                                        ${botaoConcluido}
+                                        <button class="botaoSubmit" onclick="verDetalhes(${ag.id_agendamento})">Detalhes</button>
+
+                                    </div>
+                                </div>
+                            </li>`;
                         });
                         html += '</ul>';
                         resultadoDiv.innerHTML = html;
                     } else if (data.sucesso) {
-                        resultadoDiv.textContent = "Você não tem agendamentos";
+                        // Mensagem de "nenhum encontrado"
+                        resultadoDiv.textContent = "Nenhum agendamento encontrado para esta data.";
                     } else {
                         resultadoDiv.style.color = 'red';
                         resultadoDiv.textContent = "erro: ${data.mensagem}";
@@ -64,7 +99,58 @@
                 });                 
             }
 
-            document.addEventListener('DOMContentLoaded', pegarAgendamentos);//chama no carregamento
+            document.addEventListener('DOMContentLoaded', function() {
+                
+                pegarAgendamentos();
+                document.getElementById("btn_filtro").addEventListener("click", pegarAgendamentos);
+                document.getElementById("limpar").addEventListener("click", function() {
+                    document.getElementById("filtro").value = "";
+                    pegarAgendamentos();
+                });
+            });
+
+            function concluirAgendamento(id, botao) {
+                // desativa o botão imediatamente para evitar multiplos cliques
+                const situacao = document.getElementById(`Agendamento_${id}`);
+                botao.disabled = true;
+                botao.style.backgroundColor = "#A0A0A0"; // cinza
+                botao.textContent = "Concluindo...";
+
+                fetch(`../phpAPIs/CRUD_agendamento/putAgendamento.php`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ id_agendamento: id, status: "Concluido" })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.sucesso) {
+                        botao.textContent = "Concluído"; // muda o texto
+                        botao.style.backgroundColor = "#A0A0A0"; // cinza
+                        botao.disabled = true; // mantém desativado
+                        console.log("Agendamento concluido:", id);
+                        situacao.textContent = "Situação : Concluido"
+                    } else {
+                        botao.disabled = false;
+                        botao.style.backgroundColor = "#392F5A"; // cor original
+                        botao.textContent = "Marcar como concluído";
+                        alert("Erro ao confirmar: " + data.mensagem);
+                    }
+                })
+                .catch(err => {
+                    botao.disabled = false;
+                    botao.style.backgroundColor = "#392F5A";
+                    botao.textContent = "Concluido";
+                    console.error("Erro na requisição:", err);
+                    alert("Erro ao concluir o agendamento.");
+                });
+            }
+
+            function verDetalhes(id) {
+                window.location.href = `detalhesAgendamento.html?id=${id}`;
+            }
+
         </script>
     </body>
 </html>

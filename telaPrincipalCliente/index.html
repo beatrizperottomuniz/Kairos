@@ -15,7 +15,7 @@
         </header>
 
         <div class="divPrincipal">
-            <p class="textoTitulo">Seus agendamentos de cliente</p>
+            <p class="textoTitulo">Seus agendamentos</p>
             <p class = "textoDestaque" style=" margin-bottom: 5px;">Dia</p>
             <div class="duplaBotoes">
                 <input type="date" class="campoInput" id="filtro" style="width: 200px; height: 30px;">
@@ -53,6 +53,13 @@
                             const dataFormatada_inicio = new Date(ag.data_hora_inicio).toLocaleDateString('pt-BR', {
                             day: '2-digit', month: '2-digit', year: 'numeric'
                             });
+                            
+                            let botaoConfirmar = "";
+                            if (ag.status === "Confirmado") {
+                                botaoConfirmar = `<button class="botaoSubmit" disabled style="background-color:#A0A0A0;">Confirmado</button>`;
+                            } else {
+                                botaoConfirmar = `<button class="botaoSubmit" onclick="confirmarAgendamento('${ag.id_agendamento}', this)">Confirmar</button>`;
+                            }
 
                             const horaFormatada_inicio = new Date(ag.data_hora_inicio).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
                             const horaFormatada_fim = new Date(ag.data_hora_fim).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
@@ -65,10 +72,10 @@
                                         <p class="textoDestaque">${ag.nome_servico}</p> 
                                         <p class="textoComum">Profissional : ${ag.nome_profissional}</p>
                                         <p class="textoComum">Duração : ${ag.duracao_minutos} minutos</p>
-                                        <p class="textoComum">Situação : ${ag.status}</p>
+                                        <p class="textoComum" id="Agendamento_${ag.id_agendamento}">Situação : ${ag.status}</p>
                                     </div>
                                     <div class="duplaBotoesPaginasInternas">
-                                        <button class="botaoSubmit" onclick="confirmarAgendamento('${ag.id_agendamento}'',this)">Confirmar</button>
+                                        ${botaoConfirmar}
                                         <button class="botaoSubmit" onclick="verDetalhes('${ag.id_agendamento}')">Detalhes</button>
                                     </div>
                                 </div>
@@ -103,7 +110,8 @@
             });
 
             function confirmarAgendamento(id, botao) {
-                // desativa o botão imediatamente para evitar múltiplos cliques
+                // desativa o botão imediatamente para evitar multiplos cliques
+                const situacao = document.getElementById(`Agendamento_${id}`);
                 botao.disabled = true;
                 botao.style.backgroundColor = "#A0A0A0"; // cinza
                 botao.textContent = "Confirmando...";
@@ -113,7 +121,7 @@
                     headers: {
                         "Content-Type": "application/json"
                     },
-                    body: JSON.stringify({ id_agendamento: id, status: "Confirmada" })
+                    body: JSON.stringify({ id_agendamento: id, status: "Confirmado" })
                 })
                 .then(response => response.json())
                 .then(data => {
@@ -122,6 +130,7 @@
                         botao.style.backgroundColor = "#A0A0A0"; // cinza
                         botao.disabled = true; // mantém desativado
                         console.log("Agendamento confirmado:", id);
+                        situacao.textContent = "Situação : Confirmado"
                     } else {
                         botao.disabled = false;
                         botao.style.backgroundColor = "#392F5A"; // cor original
@@ -136,7 +145,6 @@
                     console.error("Erro na requisição:", err);
                     alert("Erro ao confirmar o agendamento.");
                 });
-                pegarAgendamentos();
             }
 
             function verDetalhes(id) {
