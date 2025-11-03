@@ -24,7 +24,10 @@
         $stmt = "SELECT
                 A.id_agendamento,
                 A.data_hora_inicio,
+                A.data_hora_fim,          
+                A.status,                 
                 S.nome_servico,
+                PS.duracao_minutos,        
                 U_Prof.nome AS nome_profissional
             FROM
                 Agendamento AS A

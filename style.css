@@ -222,9 +222,31 @@ main {
 .duplaBotoes{
     display: flex;
     flex-direction: row;
-    align-items: self-end; 
+    align-items: center; 
     justify-content: flex-start;
     width: 100%;
     gap : 10px;
     padding-bottom: 10px;
 }
+
+.divAgendamento {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    gap: 10px;
+}
+
+.duplaBotoesPaginasInternas {
+    margin-left: auto; 
+    display: flex;
+    gap: 10px; 
+    flex-direction: row;
+    align-items: center; 
+    justify-content: flex-end;
+    width: 80%;
+    padding-bottom: 10px;
+}
+
+

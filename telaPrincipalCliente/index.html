@@ -32,7 +32,7 @@
         <script>
 
             function pegarAgendamentos() {
-                const filtro = document.getElementById("filtro").value;
+                const filtroData = document.getElementById("filtro").value;
 
                 let url = "../phpAPIs/usuarioAgendamentosCliente.php";
 
@@ -50,11 +50,28 @@
                     if (data.sucesso && data.agendamentos.length > 0) {
                         let html = '<ul>';
                         data.agendamentos.forEach(ag => {
-                            const dataFormatada = new Date(ag.data_hora_inicio).toLocaleString('pt-BR');
+                            const dataFormatada_inicio = new Date(ag.data_hora_inicio).toLocaleDateString('pt-BR', {
+                            day: '2-digit', month: '2-digit', year: 'numeric'
+                            });
+
+                            const horaFormatada_inicio = new Date(ag.data_hora_inicio).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                            const horaFormatada_fim = new Date(ag.data_hora_fim).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
                             html += `<li>
-                                <p class="textoDestaque">${ag.nome_servico}</p> 
-                                <p class="textoComum">com ${ag.nome_profissional}</p>
-                                <p class="textoComum">Em: ${dataFormatada}</p>
+                                <div class="divAgendamento">
+                                    <div>
+                                        <p class="textoDestaque">${dataFormatada_inicio}</p> 
+                                        <p class="textoComum">${horaFormatada_inicio} até ${horaFormatada_fim}</p>
+                                        <p class="textoDestaque">${ag.nome_servico}</p> 
+                                        <p class="textoComum">Profissional : ${ag.nome_profissional}</p>
+                                        <p class="textoComum">Duração : ${ag.duracao_minutos} minutos</p>
+                                        <p class="textoComum">Situação : ${ag.status}</p>
+                                    </div>
+                                    <div class="duplaBotoesPaginasInternas">
+                                        <button class="botaoSubmit" onclick="confirmarAgendamento('${ag.id_agendamento}'',this)">Confirmar</button>
+                                        <button class="botaoSubmit" onclick="verDetalhes('${ag.id_agendamento}')">Detalhes</button>
+                                    </div>
+                                </div>
                             </li>`;
                         });
                         html += '</ul>';
@@ -85,6 +102,46 @@
                 });
             });
 
+            function confirmarAgendamento(id, botao) {
+                // desativa o botão imediatamente para evitar múltiplos cliques
+                botao.disabled = true;
+                botao.style.backgroundColor = "#A0A0A0"; // cinza
+                botao.textContent = "Confirmando...";
+
+                fetch(`../phpAPIs/CRUD_agendamento/putAgendamento.php`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ id_agendamento: id, status: "Confirmada" })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.sucesso) {
+                        botao.textContent = "Confirmada"; // muda o texto
+                        botao.style.backgroundColor = "#A0A0A0"; // cinza
+                        botao.disabled = true; // mantém desativado
+                        console.log("Agendamento confirmado:", id);
+                    } else {
+                        botao.disabled = false;
+                        botao.style.backgroundColor = "#392F5A"; // cor original
+                        botao.textContent = "Confirmar";
+                        alert("Erro ao confirmar: " + data.mensagem);
+                    }
+                })
+                .catch(err => {
+                    botao.disabled = false;
+                    botao.style.backgroundColor = "#392F5A";
+                    botao.textContent = "Confirmar";
+                    console.error("Erro na requisição:", err);
+                    alert("Erro ao confirmar o agendamento.");
+                });
+                pegarAgendamentos();
+            }
+
+            function verDetalhes(id) {
+                console.log("Mostrando detalhes do agendamento:", id);
+            }
 
         </script>
     </body>
