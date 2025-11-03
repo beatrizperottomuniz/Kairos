@@ -218,3 +218,13 @@ main {
     gap : 20px;
     padding-left: 10px;
 }
+
+.duplaBotoes{
+    display: flex;
+    flex-direction: row;
+    align-items: self-end; 
+    justify-content: flex-start;
+    width: 100%;
+    gap : 10px;
+    padding-bottom: 10px;
+}

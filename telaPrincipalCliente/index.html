@@ -15,42 +15,53 @@
         </header>
 
         <div class="divPrincipal">
-            <h1 class="textoDestaque">Seus agendamentos de cliente</h1>
+            <p class="textoTitulo">Seus agendamentos de cliente</p>
+            <p class = "textoDestaque" style=" margin-bottom: 5px;">Dia</p>
+            <div class="duplaBotoes">
+                <input type="date" class="campoInput" id="filtro" style="width: 200px; height: 30px;">
+                <button class="botaoSubmit" id="btn_filtro" style=" margin-top: 5px; height:30px; width: 100px;">Filtrar</button>
+                <button class="botaoSubmit" id="limpar" style=" margin-top: 5px; height: 30px; width: 100px;">Limpar</button>
+            </div>
             
             <div id="resultado">
                 <p>carregando...</p>
             </div>
             
-            <hr>
-            
-            <form method="POST" action="../phpAPIs/usuarioAgendamentos.php">
-                <label for="hora" class="textoDestaque">Hora e dia:</label>
-                <input class="campoInput" type="datetime-local" name="hora_dia">
-                <button type="submit" class="botaoSubmit">Cadastrar agendamento</button>
-            </form>
         </div>
 
         <script>
+
             function pegarAgendamentos() {
-                fetch("../phpAPIs/usuarioAgendamentos.php")
+                const filtro = document.getElementById("filtro").value;
+
+                let url = "../phpAPIs/usuarioAgendamentosCliente.php";
+
+                // se data adicionada = coloca na Url
+                if (filtroData) {
+                    url += `?data=${filtroData}`; 
+                }
+
+                fetch(url)
                 .then(response => response.json())
                 .then(data => {
                     const resultadoDiv = document.querySelector("#resultado");
+                    resultadoDiv.innerHTML = ''; 
 
                     if (data.sucesso && data.agendamentos.length > 0) {
-                        let html = '<ul>';//lista
+                        let html = '<ul>';
                         data.agendamentos.forEach(ag => {
                             const dataFormatada = new Date(ag.data_hora_inicio).toLocaleString('pt-BR');
                             html += `<li>
                                 <p class="textoDestaque">${ag.nome_servico}</p> 
                                 <p class="textoComum">com ${ag.nome_profissional}</p>
                                 <p class="textoComum">Em: ${dataFormatada}</p>
-                            </li>`;//elemento da lista
+                            </li>`;
                         });
                         html += '</ul>';
                         resultadoDiv.innerHTML = html;
                     } else if (data.sucesso) {
-                        resultadoDiv.textContent = "Você não tem agendamentos";
+                        // Mensagem de "nenhum encontrado"
+                        resultadoDiv.textContent = "Nenhum agendamento encontrado para esta data.";
                     } else {
                         resultadoDiv.style.color = 'red';
                         resultadoDiv.textContent = "erro: ${data.mensagem}";
@@ -64,7 +75,17 @@
                 });                 
             }
 
-            document.addEventListener('DOMContentLoaded', pegarAgendamentos);//chama no carregamento
+            document.addEventListener('DOMContentLoaded', function() {
+                
+                pegarAgendamentos();
+                document.getElementById("btn_filtro").addEventListener("click", pegarAgendamentos);
+                document.getElementById("limpar").addEventListener("click", function() {
+                    document.getElementById("filtro").value = "";
+                    pegarAgendamentos();
+                });
+            });
+
+
         </script>
     </body>
 </html>
