@@ -58,12 +58,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         } else {
             echo json_encode(['sucesso' => false, 'mensagem' => 'Erro no cadastro: ' . $exception->getMessage()]);
         }
+
+        $stmtPerfil->close();
+        $stmtUsuario->close();
     }
 
 } else {
     echo json_encode(['sucesso' => false, 'mensagem' => 'Método de requisição inválido.']);
 }
-$stmtPerfil->close();
-$stmtUsuario->close();
+
 $conn->close();
 ?>

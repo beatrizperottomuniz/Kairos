@@ -46,8 +46,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     } else {
         echo json_encode(['sucesso' => false, 'mensagem' => 'Email ou senha incorretos.']);
     }
+    $stmt->close();
+
 }
 
-$stmt->close();
 $conn->close();
 ?>

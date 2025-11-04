@@ -44,8 +44,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             echo json_encode(['sucesso' => false, 'mensagem' => 'Erro no cadastro: ' . $exception->getMessage()]);
         }
     }
+    $stmtUsuario->close();
 
 }
-$stmtUsuario->close();
+
 $conn->close();
 ?>

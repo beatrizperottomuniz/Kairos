@@ -1,0 +1,88 @@
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <link rel="stylesheet" href="../style.css">
+    </head>
+
+    <body>
+
+        <header class="headerInterno">
+            <a href="../ExportarHistorico/index.html" class="linkPag">Exportar</a>
+            <a href="cadastrarProfissional/index.html" class="linkPag">Histórico</a>
+            <a href="../telaPrincipalCliente/index.html" class="linkPag">Agenda</a>
+            <a href="#" class="linkPag">Novo Agendamento</a>
+            <a href="cadastrarCliente/index.html" class="linkPag">Perfil</a>
+        </header>
+
+        <div class="divPrincipal">
+            <!-- 🔍 Seção de busca -->
+            <p class="textoDestaque">Busque um profissional</p>
+            <input type="text" id="campoBusca" class="campoInput" style="margin-bottom: 10px;" placeholder="Pesquise por nome, serviço ou especialidade...">
+            <button id="botaoBuscar" class="botaoSubmit">Buscar</button>
+
+            <div id="resultadoBusca" class="resultado-container">
+                
+            </div>
+
+            <!-- form de agendamento (inicialmente escondido) -->
+            <div id="formAgendamento" class="form-agendamento" style="display:none;">
+            <p class="textoDestaque">Agendar com <span id="nomeProfissional"></span></p>
+
+            <label for="servico">Serviço:</label>
+            <select id="servico" class="campoInput"></select>
+
+            <label for="data">Data:</label>
+            <input type="date" id="data" class="campoInput" style="margin-bottom: 10px;"">
+
+            <label for="hora">Horário:</label>
+            <select id="hora" class="campoInput"></select>
+
+            <label for="observacao">Observações:</label>
+            <textarea id="observacao" class="campoInput"></textarea>
+
+            <button id="confirmarAgendamento" class="botaoSubmit">Confirmar Agendamento</button>
+            </div>
+
+            
+        </div>
+
+        <script>
+            document.addEventListener("click", (event) => {
+                // se o clique for em um botão de agendar
+                if (event.target.classList.contains("botaoAgendar")) {
+                    const nome = event.target.dataset.nome; // nome do profissional
+                    const id = event.target.dataset.id; // id_profissional
+
+                    // preenche o nome no formulário
+                    document.getElementById("nomeProfissional").textContent = nome;
+
+                    // mostra o formulário (que estava escondido)
+                    const form = document.getElementById("formAgendamento");
+                    form.style.display = "block";
+
+                    // rola suavemente até o topo da tela
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+
+                    // carrega os serviços disponíveis desse profissional
+                    carregarServicos(id);
+                }
+                });
+
+                // exemplo de carregamento de serviços via fetch
+                function carregarServicos(idProfissional) {
+                fetch(`php/listarServicosProfissional.php?id_profissional=${idProfissional}`)
+                    .then(resp => resp.json())
+                    .then(servicos => {
+                    const select = document.getElementById("servico");
+                    select.innerHTML = "";
+                    servicos.forEach(s => {
+                        const opt = document.createElement("option");
+                        opt.value = s.id_profissional_servico;
+                        opt.textContent = `${s.nome_servico} — R$${s.preco}`;
+                        select.appendChild(opt);
+                    });
+                    });
+                }
+        </script>
+    </body>
+</html>

@@ -73,30 +73,32 @@ CREATE TABLE Agendamento (
     observacao VARCHAR(400),
 
     CONSTRAINT fk_agend_cliente
-        FOREIGN KEY (id_cliente) REFERENCES Usuario(id_usuario),
+        FOREIGN KEY (id_cliente) REFERENCES Usuario(id_usuario)
+        ON DELETE CASCADE,
     CONSTRAINT fk_agend_prof_servico
         FOREIGN KEY (id_profissional_servico) REFERENCES Profissional_Servico(id_profissional_servico)
+        ON DELETE CASCADE
 );
 
 -- ⭐ AVALIAÇÕES DE CLIENTES
 CREATE TABLE Avaliacao (
     id_avaliacao INT PRIMARY KEY AUTO_INCREMENT,
-    id_agendamento INT NOT NULL,
-    id_cliente INT NOT NULL,
-    id_profissional INT NOT NULL,
+    id_agendamento INT NULL,
+    id_cliente INT NULL,
+    id_profissional INT NULL,
     nota INT CHECK (nota BETWEEN 1 AND 5),
     comentario TEXT,
     data_avaliacao DATETIME DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT fk_av_agendamento
         FOREIGN KEY (id_agendamento) REFERENCES Agendamento(id_agendamento)
-        ON DELETE CASCADE,
+        ON DELETE SET NULL,
     CONSTRAINT fk_av_cliente
         FOREIGN KEY (id_cliente) REFERENCES Usuario(id_usuario)
-        ON DELETE CASCADE,
+        ON DELETE SET NULL,
     CONSTRAINT fk_av_profissional
         FOREIGN KEY (id_profissional) REFERENCES Usuario(id_usuario)
-        ON DELETE CASCADE
+        ON DELETE SET NULL
 );
 
 -- 🏠 LOCAL DE ATENDIMENTO

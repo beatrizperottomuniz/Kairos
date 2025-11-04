@@ -106,11 +106,12 @@
             header("Location: ../telaPrincipal/index.html?erro=inesperado");
         }
 
-
+        $stmtDisp->close();
+        $stmtConf->close();
+        $stmtInsert->close();
+        
         }
-    $stmtDisp->close();
-    $stmtConf->close();
-    $stmtInsert->close();
+
     $stmt->close();
     $conn->close();
 ?>
