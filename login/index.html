@@ -15,7 +15,7 @@
                 <div class = "divMediaLoginCadastro">
                     <form id="formLogin">
                         <label for="email" class="textoDestaque">Email</label>
-                        <input class= "campoInput" type="text" placeholder="Insira seu email" id="email">
+                        <input class= "campoInput" type="email" required placeholder="Insira seu email" id="email">
                         <label for="email" class="textoDestaque"> Senha</label>
                         <input class= "campoInput" type="password" placeholder="Insira sua senha" id="senha">
                         <p id="mensagemLogin"></p>
@@ -35,6 +35,11 @@
         <script>
             const formLogin = document.getElementById('formLogin');
             formLogin.addEventListener('submit', function(event) {
+                if (!formLogin.checkValidity()) {
+                    // força o navegador a mostrar os erros visuais
+                    formLogin.reportValidity();
+                    return;
+                }
                 event.preventDefault(); //n recarrega pag
                 
                 const emailInput = document.getElementById("email").value;

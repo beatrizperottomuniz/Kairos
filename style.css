@@ -69,6 +69,22 @@
     font-size: 16px;
 }
 
+.campoInput[type="email"] {
+    border-radius: 12px;
+    border: 2px solid #87D2C9;  
+    width: 771px; 
+    width: 100%;  
+    padding: 12px 15px;
+    font-family: sans-serif;
+    font-size: 16px;
+  }
+
+  .erro {
+    color: #e74c3c;
+    font-size: 12px;
+    display: none;
+  }
+
 .divDeServicoCancelado{
     max-width: 771px; 
     max-height: 131px;
