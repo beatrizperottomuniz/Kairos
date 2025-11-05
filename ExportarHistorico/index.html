@@ -1,0 +1,55 @@
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <link rel="stylesheet" href="../style.css">
+    </head>
+
+    <body>
+
+        <header class="headerInterno">
+            <a href="#" class="linkPag">Exportar</a>
+            <a href="cadastrarProfissional/index.html" class="linkPag">Histórico</a>
+            <a href="#" class="linkPag">Agenda</a>
+            <a href="../NovoAgendamento/index.html" class="linkPag" id="novoAgendamento" style="display:none;">Novo Agendamento</a>
+            <a href="cadastrarCliente/index.html" class="linkPag">Perfil</a>
+        </header>
+
+        <div class="divPrincipal">
+            <button class="botaoSubmit" id="download" style="margin-top: 5px;">Download</button>
+            <p class="textoTitulo">Exporte seus agendamentos</p>
+            <p class="textoDestaque">Seu arquivo será de extensão CSV</p>
+            <p class="textoDestaque">O arquivo terá a estrutura do exemplo abaixo:</p>
+            <p class="textoComum"><em>cliente,profissional,data_hora_inicio,data_hora_fim,status,observacao,nome_servico,descricao_geral,preço</em></p>
+            <p class="textoComum"><em>"Beatriz Silva","Maria Silva",2025-11-02 14:00:00,2025-11-02 15:00:00,Confirmado,"","Corte de Cabelo","Corte masculino com finalização e lavagem",50.00</em></p>
+            <p class="textoComum"><em>"Cleiton Carvalho","João Pereira",2025-11-02 16:00:00,2025-11-02 17:30:00,Pendente,"","Manicure e Pedicure","Serviço completo de unhas das mãos e dos pés",70.00</em></p>
+            <p class="textoComum"><em>"Eduardo Menezes","Ana Souza",2025-11-03 10:30:00,2025-11-03 11:15:00,Cancelado,"Cliente necessita de rampa","Massagem Relaxante","Massagem corporal relaxante com óleos essenciais",120.00</em></p>
+        </div>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const botaoDownload = document.getElementById("download");
+                const navBarNovoAgendamento = document.getElementById("novoAgendamento");
+
+                fetch("../phpAPIs/getInfoUsuario.php")
+                    .then(response => response.json())
+                    .then(function(data) {
+                        if (data.tipo_conta == "profissional") {
+                            navBarNovoAgendamento.style.display = "none";
+                        } else {
+                            navBarNovoAgendamento.style.display = "block";
+                        }
+                    })
+                    .catch(err => {
+                        console.error("Erro no fetch:", err);
+                    });
+                
+
+                botaoDownload.addEventListener("click", function () {
+                    // Chama diretamente o PHP responsável por gerar e enviar o CSV
+                    window.location.href = "../phpAPIs/usuarioAgendamentos.php";
+                });
+            });
+        </script>
+
+    </body>
+</html>

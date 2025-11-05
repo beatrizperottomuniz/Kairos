@@ -38,7 +38,7 @@
             JOIN
                 Usuario AS U_Prof ON PS.id_usuario_profissional = U_Prof.id_usuario
             WHERE
-                A.id_cliente = ? AND A.status != 'Cancelado'";
+                A.id_cliente = ? AND A.status != 'Cancelado' AND A.status != 'Concluido'";
         
         
         

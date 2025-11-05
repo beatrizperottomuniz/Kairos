@@ -19,13 +19,18 @@
                 A.data_hora_inicio,
                 A.data_hora_fim,
                 A.status,
+                A.observacao,
                 S.nome_servico,
+                S.descricao_geral,
+                PS.preco,
                 PS.duracao_minutos,
-                U_Cliente.nome AS nome_cliente
+                U_Cliente.nome AS nome_cliente,
+                U_Profissional.nome AS profissional
             FROM Agendamento AS A
             JOIN Profissional_Servico AS PS ON A.id_profissional_servico = PS.id_profissional_servico
             JOIN Servico AS S ON PS.id_servico = S.id_servico
             JOIN Usuario AS U_Cliente ON A.id_cliente = U_Cliente.id_usuario
+            JOIN Usuario AS U_Profissional ON PS.id_profissional = U_Profissional.id_usuario
             WHERE A.id_agendamento = ?
         ");
         $stmt->bind_param("i", $id);

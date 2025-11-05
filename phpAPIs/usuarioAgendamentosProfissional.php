@@ -36,7 +36,7 @@
                 JOIN
                     Usuario AS U_Cliente ON A.id_cliente = U_Cliente.id_usuario
                 WHERE
-                    PS.id_usuario_profissional = ? AND A.status != 'Cancelado'";
+                    PS.id_usuario_profissional = ? AND A.status != 'Cancelado' AND A.status != 'Concluido'";
         
         if ($dataFiltro) {
             $stmt .= " AND DATE(A.data_hora_inicio) = ?";
