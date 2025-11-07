@@ -1,0 +1,77 @@
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <link rel="stylesheet" href="../style.css">
+    </head>
+
+    <body>
+        <header class="headerInterno">
+            <a href="../ExportarHistorico/index.html" class="linkPag">Exportar</a>
+            <a href="cadastrarProfissional/index.html" class="linkPag">Histórico</a>
+            <a href="#" class="linkPag">Agenda</a>
+            <a href="../NovoAgendamento/index.html" class="linkPag">Novo Agendamento</a>
+            <a href="cadastrarCliente/index.html" class="linkPag">Perfil</a>
+        </header>
+
+        <div class="divPrincipal">
+            <p class="textoTitulo">Perfil</p>
+
+            <div class="duplaBotoes">
+                <a class="botaoSubmit" style="margin-top: 5px;" href="editar.html">Editar informações</a>
+                <a class="botaoSubmit" style="margin-top: 5px;" href="../phpAPIs/logoutUsuario.php">Logout</a>
+                <button class="botaoSubmit" id="excluir" style="margin-top: 5px;">Excluir conta</button>
+            </div>
+
+            <p class="textoDestaque">Nome completo</p>
+            <p class="textoComum" id="nome">Carregando...</p>
+
+            <p class="textoDestaque">Email cadastrado</p>
+            <p class="textoComum" id="email">Carregando...</p>
+
+            <p class="textoDestaque">Tipo de conta</p>
+            <p class="textoComum" id="tipo">Carregando...</p>
+        </div>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", () => {
+                fetch("../phpAPIs/CRUD cliente/getCliente.php")
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.sucesso) {
+                            const usuario = data.usuario;
+                            document.getElementById("nome").textContent = usuario.nome;
+                            document.getElementById("email").textContent = usuario.email;
+                            document.getElementById("tipo").textContent = usuario.tipo_conta;
+                        } else {
+                            document.body.innerHTML = `<p>Erro: ${data.erro || "Usuário não encontrado."}</p>`;
+                        }
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        document.body.innerHTML = "<p>Erro ao carregar os dados do usuário.</p>";
+                    });
+            });
+
+            document.getElementById("excluir").addEventListener("click", () => {
+                if (confirm("Tem certeza que deseja excluir sua conta? Esta ação não poderá ser desfeita.")) {
+                    fetch("../phpAPIs/CRUD cliente/deleteCliente.php", {
+                        method: "DELETE"
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.sucesso) {
+                            alert("Conta excluída com sucesso!");
+                            window.location.href = "../index.html"; // Redireciona para a landing page
+                        } else {
+                            alert("Erro: " + (data.mensagem || "Falha ao excluir conta."));
+                        }
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        alert("Erro no servidor ao excluir a conta.");
+                    });
+                }
+            });
+        </script>
+    </body>
+</html>

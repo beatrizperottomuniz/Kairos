@@ -46,7 +46,7 @@ CREATE TABLE Profissional_Servico (
         FOREIGN KEY (id_servico) REFERENCES Servico(id_servico)
         ON DELETE CASCADE,
 
-    UNIQUE (id_usuario_profissional, id_servico)
+    UNIQUE (id_usuario_profissional, id_servico, descricao_adicional)
 );
 
 -- 🕐 DISPONIBILIDADE FIXA SEMANAL
@@ -65,8 +65,8 @@ CREATE TABLE Disponibilidade (
 -- 📅 AGENDAMENTOS
 CREATE TABLE Agendamento (
     id_agendamento INT PRIMARY KEY AUTO_INCREMENT,
-    id_cliente INT NOT NULL,
-    id_profissional_servico INT NOT NULL,
+    id_cliente INT NULL,
+    id_profissional_servico INT NULL,
     data_hora_inicio DATETIME NOT NULL,
     data_hora_fim DATETIME NOT NULL,
     status ENUM('Pendente', 'Confirmado', 'Cancelado', 'Concluido') NOT NULL DEFAULT 'Pendente',
@@ -74,10 +74,10 @@ CREATE TABLE Agendamento (
 
     CONSTRAINT fk_agend_cliente
         FOREIGN KEY (id_cliente) REFERENCES Usuario(id_usuario)
-        ON DELETE CASCADE,
+        ON DELETE SET NULL,
     CONSTRAINT fk_agend_prof_servico
         FOREIGN KEY (id_profissional_servico) REFERENCES Profissional_Servico(id_profissional_servico)
-        ON DELETE CASCADE
+        ON DELETE SET NULL
 );
 
 -- ⭐ AVALIAÇÕES DE CLIENTES

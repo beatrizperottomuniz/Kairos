@@ -8,18 +8,27 @@
         exit;
     }
 
-    if($_SERVER["REQUEST_METHOD"]=="PUT"){
+    if ($_SERVER["REQUEST_METHOD"] == "PUT") {
         $input = json_decode(file_get_contents("php://input"), true);
         $id = $input['id_agendamento'] ?? null;
         $status = $input['status'] ?? null;
+        $observacao = $input['observacao'] ?? null;
 
-        if (!$id || !$status) {
-            echo json_encode(['sucesso' => false, 'mensagem' => 'Dados incompletos']);
+        if (!$id) {
+            echo json_encode(['sucesso' => false, 'mensagem' => 'ID não informado']);
             exit;
         }
 
-        $stmt = $conn->prepare("UPDATE Agendamento SET status = ? WHERE id_agendamento = ?");
-        $stmt->bind_param("si", $status, $id);
+        if ($status) {
+            $stmt = $conn->prepare("UPDATE Agendamento SET status = ? WHERE id_agendamento = ?");
+            $stmt->bind_param("si", $status, $id);
+        } elseif ($observacao) {
+            $stmt = $conn->prepare("UPDATE Agendamento SET observacao = ? WHERE id_agendamento = ?");
+            $stmt->bind_param("si", $observacao, $id);
+        } else {
+            echo json_encode(['sucesso' => false, 'mensagem' => 'Nenhum campo válido para atualizar']);
+            exit;
+        }
 
         if ($stmt->execute()) {
             echo json_encode(['sucesso' => true]);

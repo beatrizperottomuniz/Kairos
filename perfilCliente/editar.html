@@ -1,0 +1,78 @@
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <link rel="stylesheet" href="../style.css">
+    </head>
+
+    <body>
+
+        <div class="divPrincipal">
+            <p class="textoTitulo">Perfil</p>
+
+            <div class="duplaBotoes">
+                <button class="botaoSubmit" id="salvar" style="margin-top: 5px;">Salvar</button>
+                <a class="botaoSubmit" id="excluir" style="margin-top: 5px;" href="index.html">Cancelar</a>
+            </div>
+            <p class="textoDestaque">Nome completo</p>
+            <input type="text" class="campoInput" id="nome" placeholder="nome">
+
+            <p class="textoDestaque">Email cadastrado</p>
+            <input type="email" class="campoInput" id="email" placeholder="nome">
+
+            <p class="textoDestaque">Senha</p>
+            <input type="text" class="campoInput" id="senha" placeholder="nome">
+        </div>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", () => {
+                fetch("../phpAPIs/CRUD cliente/getCliente.php")
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.sucesso) {
+                            const usuario = data.usuario;
+                            document.getElementById("nome").value = usuario.nome;
+                            document.getElementById("email").value = usuario.email;
+                            document.getElementById("senha").value = usuario.senha;
+                        } else {
+                            document.body.innerHTML = `<p>Erro: ${data.erro || "Usuário não encontrado."}</p>`;
+                        }
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        document.body.innerHTML = "<p>Erro ao carregar os dados do usuário.</p>";
+                    });
+
+                document.getElementById("salvar").addEventListener("click", () => {
+                    const nome = document.getElementById("nome").value.trim();
+                    const email = document.getElementById("email").value.trim();
+                    const senha = document.getElementById("senha").value.trim();
+
+                    if (!nome || !email || !senha) {
+                        alert("Preencha nome, email e senha.");
+                        return;
+                    }
+
+                    fetch("../phpAPIs/CRUD cliente/putCliente.php", {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ nome, email, senha })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.sucesso) {
+                            alert("Dados atualizados com sucesso!");
+                            window.location.href = "index.html";
+                        } else {
+                            alert("Erro: " + data.mensagem);
+                        }
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        alert("Erro ao atualizar usuário.");
+                    });
+                });
+            });
+
+        </script>
+    </body>
+</html>

@@ -7,9 +7,10 @@
     }
 
     if($_SERVER["REQUEST_METHOD"]=="GET"){
-        $id = $_GET['id'] ?? null;
-        if (!$id) {
-            echo json_encode(['sucesso' => false, 'mensagem' => 'ID não fornecido.']);
+
+        $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+        if ($id <= 0) {
+            echo json_encode(['sucesso' => false, 'mensagem' => 'ID inválido.']);
             exit;
         }
 
@@ -30,12 +31,13 @@
             JOIN Profissional_Servico AS PS ON A.id_profissional_servico = PS.id_profissional_servico
             JOIN Servico AS S ON PS.id_servico = S.id_servico
             JOIN Usuario AS U_Cliente ON A.id_cliente = U_Cliente.id_usuario
-            JOIN Usuario AS U_Profissional ON PS.id_profissional = U_Profissional.id_usuario
+            JOIN Usuario AS U_Profissional ON PS.id_usuario_profissional = U_Profissional.id_usuario
             WHERE A.id_agendamento = ?
         ");
         $stmt->bind_param("i", $id);
         $stmt->execute();
         $result = $stmt->get_result();
+        
         if ($agendamento = $result->fetch_assoc()) {
             echo json_encode(['sucesso' => true, 'agendamento' => $agendamento]);
         } else {

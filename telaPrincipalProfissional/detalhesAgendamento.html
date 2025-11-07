@@ -5,20 +5,28 @@
     </head>
 
     <body>
-        <h1>Detalhes do Agendamento</h1>
-        <p><strong>Data:</strong> <span id="data"></span></p>
-        <p><strong>Hora início:</strong> <span id="horaInicio"></span></p>
-        <p><strong>Hora fim:</strong> <span id="horaFim"></span></p>
-        <p><strong>Cliente:</strong> <span id="cliente"></span></p>
-        <p><strong>Serviço:</strong> <span id="servico"></span></p>
-        <p><strong>Status:</strong> <span id="status"></span></p>
 
+        <header class="headerInterno">
+            <a href="../ExportarHistorico/index.html" class="linkPag">Exportar</a>
+            <a href="cadastrarProfissional/index.html" class="linkPag">Histórico</a>
+            <a href="#" class="linkPag">Agenda</a>
+            <a href="cadastrarCliente/index.html" class="linkPag">Perfil</a>
+        </header>
 
+        <div class="divPrincipal">
+            <p class="textoTitulo">Detalhes do Agendamento</p>
+            <p><strong>Data:</strong> <span id="data"></span></p>
+            <p><strong>Hora início:</strong> <span id="horaInicio"></span></p>
+            <p><strong>Hora fim:</strong> <span id="horaFim"></span></p>
+            <p><strong>Cliente:</strong> <span id="cliente"></span></p>
+            <p><strong>Serviço:</strong> <span id="servico"></span></p>
+            <p><strong>Status:</strong> <span id="status"></span></p>
+
+            <button class="botaoSubmit" id="cancelarBtn" style="display:none; margin-top:50px;">Cancelar Agendamento</button>
+        </div>
 
         <script>
-
             document.addEventListener("DOMContentLoaded", function() {
-                // pega o id que veio na URL, ex: detalhesAgendamento.html?id=7
                 const params = new URLSearchParams(window.location.search);
                 const id = params.get("id");
 
@@ -30,6 +38,7 @@
                 fetch(`../phpAPIs/CRUD_agendamento/getAgendamento.php?id=${id}`)
                     .then(response => response.json())
                     .then(data => {
+                        console.log(data)
                         if (data.sucesso) {
                             const ag = data.agendamento;
                             document.getElementById("data").textContent = new Date(ag.data_hora_inicio).toLocaleDateString("pt-BR");
@@ -38,6 +47,10 @@
                             document.getElementById("cliente").textContent = ag.nome_cliente;
                             document.getElementById("servico").textContent = ag.nome_servico;
                             document.getElementById("status").textContent = ag.status;
+
+                            if (ag.status !== "Cancelado" && ag.status !== "Concluido") {
+                                document.getElementById("cancelarBtn").style.display = "inline-block";
+                            }
                         } else {
                             document.body.innerHTML = `<p>Erro: ${data.mensagem}</p>`;
                         }
@@ -46,8 +59,36 @@
                         console.error(err);
                         document.body.innerHTML = "<p>Erro ao carregar os detalhes.</p>";
                     });
-            });
 
+                document.getElementById("cancelarBtn").addEventListener("click", function() {
+                    if (confirm("Tem certeza que deseja cancelar este agendamento?")) {
+                        fetch("../phpAPIs/CRUD_agendamento/deleteAgendamento.php", {
+                            method: "PUT",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ id_agendamento: id })
+                        })
+                        .then(r => r.text()) // 
+                        .then(txt => {
+                            try {
+                                const res = JSON.parse(txt);
+                                if (res.sucesso) {
+                                    alert("Agendamento cancelado com sucesso!");
+                                    window.location.href = "../telaPrincipalProfissional/index.html";
+                                } else {
+                                    alert("Erro: " + res.mensagem);
+                                }
+                            } catch (e) {
+                                console.error("Resposta inesperada do servidor:", txt);
+                                alert("Erro no servidor (ver console).");
+                            }
+                        })
+                        .catch(err => {
+                            console.error(err);
+                            alert("Erro ao cancelar agendamento.");
+                        });
+                    }
+                });
+            });
         </script>
     </body>
 </html>
