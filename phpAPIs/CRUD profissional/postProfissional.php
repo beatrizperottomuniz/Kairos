@@ -1,6 +1,5 @@
 <?php
 
-// to do : senha em hash? 
 header('Content-Type: application/json');
 
 $conn = mysqli_connect("localhost:3306", "root", "", "Kairos");
@@ -16,7 +15,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $senha = $dados["senha"] ?? ''; 
     $especialidade = $dados["especialidade"] ?? '';
     $biografia = $dados["biografia"] ?? '';
-    $endereco = $dados["endereco"] ?? '';
 
     if (empty($nome) || empty($email) || empty($senha)) {
         echo json_encode(['sucesso' => false, 'mensagem' => 'Erro: Nome, email, senha são obrigatórios.']);
@@ -38,8 +36,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $stmtUsuario->close();
 
         //insert no profissional
-        $stmtPerfil = $conn->prepare("INSERT INTO Perfil_Profissional (id_usuario, especialidade, biografia, endereco) VALUES (?, ?, ?, ?)");
-        $stmtPerfil->bind_param("isss", $id_novo_usuario, $especialidade, $biografia, $endereco);
+        $stmtPerfil = $conn->prepare("INSERT INTO Perfil_Profissional (id_usuario, especialidade, biografia) VALUES (?, ?, ?)");
+        $stmtPerfil->bind_param("iss", $id_novo_usuario, $especialidade, $biografia);
         $stmtPerfil->execute();
         $stmtPerfil->close();
 

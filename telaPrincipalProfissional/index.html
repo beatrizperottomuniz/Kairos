@@ -7,10 +7,11 @@
     <body>
 
         <header class="headerInterno">
-            <a href="../ExportarHistorico/index.html" class="linkPag">Exportar</a>
-            <a href="cadastrarProfissional/index.html" class="linkPag">Histórico</a>
-            <a href="#" class="linkPag">Agenda</a>
-            <a href="cadastrarCliente/index.html" class="linkPag">Perfil</a>
+            <a href="../exportarAgendamentos/index.html" class="linkPag">Exportar</a>
+            <a href="../historicoAgendamentos/index.html" class="linkPag">Histórico</a>
+            <a href="" id = "agenda" class="linkPag">Agenda</a>
+            <a href="../NovoAgendamento/index.html" class="linkPag" id="novoAgendamento" style="display:none;">Novo Agendamento</a>
+            <a href="" id = "perfil" class="linkPag">Perfil</a>
         </header>
 
         <div class="divPrincipal">
@@ -23,12 +24,23 @@
             </div>
             
             <div id="resultado">
-                <p>carregando...</p>
+                <p>Carregando...</p>
             </div>
             
         </div>
 
         <script>
+            //para ficar mais facil escape de html
+            function escapeHTML(str) {
+                if (str === null || str === undefined) return '';
+                return str.toString()
+                        .replace(/&/g, '&amp;')
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;')
+                        .replace(/"/g, '&quot;')
+                        .replace(/'/g, '&#039;');
+            }
+
             function pegarAgendamentos() {
                 const filtroData = document.getElementById("filtro").value;
 
@@ -46,8 +58,16 @@
                     resultadoDiv.innerHTML = ''; 
 
                     if (data.sucesso && data.agendamentos.length > 0) {
+                        const hoje = new Date();
+                        const hojeData = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+                        const agendamentosFiltrados = data.agendamentos.filter(ag => {
+                            const dataInicio = new Date(ag.data_hora_inicio);
+                            const agendamentoData = new Date(dataInicio.getFullYear(), dataInicio.getMonth(), dataInicio.getDate());
+                            return agendamentoData >= hojeData;
+                        });
+
                         let html = '<ul>';
-                        data.agendamentos.forEach(ag => {
+                        agendamentosFiltrados.forEach(ag => {
                             const dataFormatada_inicio = new Date(ag.data_hora_inicio).toLocaleDateString('pt-BR', {
                             day: '2-digit', month: '2-digit', year: 'numeric'
                             });
@@ -67,8 +87,8 @@
                                     <div>
                                         <p class="textoDestaque">${dataFormatada_inicio}</p> 
                                         <p class="textoComum">${horaFormatada_inicio} até ${horaFormatada_fim}</p>
-                                        <p class="textoDestaque">${ag.nome_servico}</p> 
-                                        <p class="textoComum">Cliente : ${ag.nome_cliente}</p>
+                                        <p class="textoDestaque">${escapeHTML(ag.nome_servico)}</p> 
+                                        <p class="textoComum">Cliente : ${escapeHTML(ag.nome_cliente)}</p>
                                         <p class="textoComum">Duração : ${ag.duracao_minutos} minutos</p>
                                         <p class="textoComum" id="Agendamento_${ag.id_agendamento}">Situação : ${ag.status}</p>
                                     </div>
@@ -98,7 +118,28 @@
                 });                 
             }
 
-            document.addEventListener('DOMContentLoaded', function() {
+            document.addEventListener('DOMContentLoaded', () => {
+
+                const navBarPerfil = document.getElementById("perfil");
+                const navBarAgenda = document.getElementById("agenda");
+                const navBarNovoAgendamento = document.getElementById("novoAgendamento");
+
+                fetch("../phpAPIs/getInfoUsuario.php")
+                    .then(response => response.json())
+                    .then( data=> {
+                        if (data.tipo_conta == "profissional") {
+                            navBarNovoAgendamento.style.display = "none";
+                            navBarPerfil.href = "../perfilProfissional/index.html";
+                            navBarAgenda.href = "../telaPrincipalProfissional/index.html";
+                        } else {
+                            navBarNovoAgendamento.style.display = "block";
+                            navBarPerfil.href = "../perfilCliente/index.html";
+                            navBarAgenda.href = "../telaPrincipalCliente/index.html";
+                        }
+                    })
+                    .catch(err => {
+                        console.error("Erro no fetch:", err);
+                    });
                 
                 pegarAgendamentos();
                 document.getElementById("btn_filtro").addEventListener("click", pegarAgendamentos);
@@ -109,13 +150,13 @@
             });
 
             function concluirAgendamento(id, botao) {
-                // desativa o botão imediatamente para evitar multiplos cliques
+                // desativa o botao imediatamente para evitar multiplos cliques
                 const situacao = document.getElementById(`Agendamento_${id}`);
                 botao.disabled = true;
                 botao.style.backgroundColor = "#A0A0A0"; // cinza
                 botao.textContent = "Concluindo...";
 
-                fetch(`../phpAPIs/CRUD_agendamento/putAgendamento.php`, {
+                fetch(`../phpAPIs/CRUD agendamento/putAgendamento.php`, {
                     method: "PUT",
                     headers: {
                         "Content-Type": "application/json"
@@ -127,7 +168,7 @@
                     if (data.sucesso) {
                         botao.textContent = "Concluído"; // muda o texto
                         botao.style.backgroundColor = "#A0A0A0"; // cinza
-                        botao.disabled = true; // mantém desativado
+                        botao.disabled = true; // mantem desativado
                         console.log("Agendamento concluido:", id);
                         situacao.textContent = "Situação : Concluido"
                     } else {

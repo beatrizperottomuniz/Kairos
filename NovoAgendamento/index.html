@@ -1,88 +1,279 @@
 <html>
-    <head>
-        <meta charset="UTF-8">
-        <link rel="stylesheet" href="../style.css">
-    </head>
-
-    <body>
-
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body>
         <header class="headerInterno">
-            <a href="../ExportarHistorico/index.html" class="linkPag">Exportar</a>
-            <a href="cadastrarProfissional/index.html" class="linkPag">Histórico</a>
-            <a href="../telaPrincipalCliente/index.html" class="linkPag">Agenda</a>
-            <a href="#" class="linkPag">Novo Agendamento</a>
-            <a href="cadastrarCliente/index.html" class="linkPag">Perfil</a>
+            <a href="../exportarAgendamentos/index.html" class="linkPag">Exportar</a>
+            <a href="../historicoAgendamentos/index.html" class="linkPag">Histórico</a>
+            <a href="" id = "agenda" class="linkPag">Agenda</a>
+            <a href="../NovoAgendamento/index.html" class="linkPag" id="novoAgendamento" style="display:none;">Novo Agendamento</a>
+            <a href="" id = "perfil" class="linkPag">Perfil</a>
         </header>
 
-        <div class="divPrincipal">
-            <!-- 🔍 Seção de busca -->
-            <p class="textoDestaque">Busque um profissional</p>
-            <input type="text" id="campoBusca" class="campoInput" style="margin-bottom: 10px;" placeholder="Pesquise por nome, serviço ou especialidade...">
-            <button id="botaoBuscar" class="botaoSubmit">Buscar</button>
+    <div class="divPrincipal">
+        <p class="textoTitulo">Novo Agendamento</p>
+        <p class="textoDestaque">Busque um profissional</p>
+        <input type="text" id="campoBusca" class="campoInput" style="margin-bottom: 10px;" placeholder="Pesquise por nome, serviço ou especialidade...">
+        <button id="botaoBuscar" class="botaoSubmit">Buscar</button>
 
-            <div id="resultadoBusca" class="resultado-container">
-                
+        <div id="resultadoBusca" class="resultado-container">
             </div>
 
-            <!-- form de agendamento (inicialmente escondido) -->
-            <div id="formAgendamento" class="form-agendamento" style="display:none;">
-            <p class="textoDestaque">Agendar com <span id="nomeProfissional"></span></p>
+        <hr>
 
-            <label for="servico">Serviço:</label>
-            <select id="servico" class="campoInput"></select>
+        <div id="formAgendamento" class="form-agendamento" style="display: none;">
+            <p class="textoTitulo">Novo Agendamento</p>    
 
-            <label for="data">Data:</label>
-            <input type="date" id="data" class="campoInput" style="margin-bottom: 10px;"">
+            <label class="textoDestaque">Profissional:</label>
+            <p id="profissionalNome" class ="textoComum" style="margin-top: 0;"></p>
 
-            <label for="hora">Horário:</label>
-            <select id="hora" class="campoInput"></select>
+            <label class="textoDestaque" for="servico">Serviço:</label>
+            <select id="servico" class="campoInput" style="margin-bottom: 10px;"></select>
 
-            <label for="observacao">Observações:</label>
-            <textarea id="observacao" class="campoInput"></textarea>
+            <label class="textoDestaque" for="data">Data:</label>
+            <input type="date" id="data" class="campoInput" style="width: 200px; height: 30px; margin-bottom: 10px;">
+            <br>
 
-            <button id="confirmarAgendamento" class="botaoSubmit">Confirmar Agendamento</button>
-            </div>
+            <label class="textoDestaque" for="hora">Horário:</label>
+            <select id="hora" class="campoInput" style="margin-bottom: 10px;"></select>
 
-            
+            <label class="textoDestaque" for="observacao">Observações:</label>
+            <textarea id="observacao" class="campoInput" style="margin-bottom: 10px;"></textarea>
+
+            <button id="confirmarAgendamento" class="botaoSubmit" style="margin-bottom: 10px;">Confirmar Agendamento</button>
         </div>
 
-        <script>
-            document.addEventListener("click", (event) => {
-                // se o clique for em um botão de agendar
-                if (event.target.classList.contains("botaoAgendar")) {
-                    const nome = event.target.dataset.nome; // nome do profissional
-                    const id = event.target.dataset.id; // id_profissional
+    </div>
 
-                    // preenche o nome no formulário
-                    document.getElementById("nomeProfissional").textContent = nome;
+    <script>
+        const campoBusca = document.getElementById("campoBusca");
+        const botaoBuscar = document.getElementById("botaoBuscar");
+        const resultadoBusca = document.getElementById("resultadoBusca");
+        
+        const formAgendamento = document.getElementById("formAgendamento");
+        const profissionalNome = document.getElementById("profissionalNome");
+        const selectServico = document.getElementById("servico");
+        const inputData = document.getElementById("data");
+        const selectHora = document.getElementById("hora");
+        const textareaObservacao = document.getElementById("observacao");
+        const botaoConfirmar = document.getElementById("confirmarAgendamento");
 
-                    // mostra o formulário (que estava escondido)
-                    const form = document.getElementById("formAgendamento");
-                    form.style.display = "block";
+        //var > id do prof selecionado
+        let idProfissionalSelecionado = null;
 
-                    // rola suavemente até o topo da tela
-                    window.scrollTo({ top: 0, behavior: "smooth" });
+        document.addEventListener("DOMContentLoaded", function () {
 
-                    // carrega os serviços disponíveis desse profissional
-                    carregarServicos(id);
-                }
+            const navBarPerfil = document.getElementById("perfil");
+            const navBarAgenda = document.getElementById("agenda");
+            const navBarNovoAgendamento = document.getElementById("novoAgendamento");
+
+            fetch("../phpAPIs/getInfoUsuario.php")
+                .then(response => response.json())
+                .then(data => {
+                    if (data.tipo_conta == "profissional") {
+                        navBarNovoAgendamento.style.display = "none";
+                        navBarPerfil.href = "../perfilProfissional/index.html";
+                        navBarAgenda.href = "../telaPrincipalProfissional/index.html";
+                    } else {
+                        navBarNovoAgendamento.style.display = "block";
+                        navBarPerfil.href = "../perfilCliente/index.html";
+                        navBarAgenda.href = "../telaPrincipalCliente/index.html";
+                    }
+                    
+                    pegarAgendamentos(data.tipo_conta);
+                    
+                })
+                .catch(err => {
+                    console.error("Erro no fetch:", err);
                 });
 
-                // exemplo de carregamento de serviços via fetch
-                function carregarServicos(idProfissional) {
-                fetch(`php/listarServicosProfissional.php?id_profissional=${idProfissional}`)
-                    .then(resp => resp.json())
-                    .then(servicos => {
-                    const select = document.getElementById("servico");
-                    select.innerHTML = "";
-                    servicos.forEach(s => {
+        });
+
+        //busca
+
+        botaoBuscar.addEventListener("click", () => {
+            const termo = campoBusca.value.trim();
+            if (termo.length < 2) {
+                alert("Digite ao menos 2 caracteres para buscar.");
+                return;
+            }
+
+            // api de busca de profs 
+            fetch(`../phpAPIs/getProfissionais.php?termo=${termo}`)
+                .then(response => response.json())
+                .then(data => {
+                    mostrarResultadoBusca(data);
+                })
+                .catch(err => {
+                    console.error("Erro ao buscar:", err);
+                    resultadoBusca.innerHTML = "<p>Erro ao buscar profissionais.</p>";
+                });
+        });
+
+        function mostrarResultadoBusca(resultados) {
+            resultadoBusca.innerHTML = "";
+            if (!resultados.sucesso || resultados.dados.length === 0) {
+                resultadoBusca.innerHTML = "<p>Nenhum profissional encontrado.</p>";
+                return;
+            }
+
+            //card de prof
+            resultados.dados.forEach(prof => {
+                const card = document.createElement("div");
+                const p1 = document.createElement("p");
+                const p = document.createElement("p");
+                const button = document.createElement("button");
+
+                p1.textContent = prof.nome;        
+                p1.className = "textoDestaque"     
+                p.textContent = prof.especialidade; 
+                p1.className = "textoComum"     
+                button.textContent = "Selecionar";
+
+                button.className = "botaoAgendar botaoSubmit";
+                button.setAttribute("data-id-profissional", prof.id_usuario);
+                button.setAttribute("data-nome-profissional", prof.nome);
+
+                card.appendChild(p1);
+                card.appendChild(p);
+                card.appendChild(button);
+                
+                resultadoBusca.appendChild(card);
+            });
+        }
+
+        //agendamento
+
+        //clique no botao de selecionar
+        resultadoBusca.addEventListener("click", (event) => {
+            if (event.target.classList.contains("botaoAgendar")) {
+                const idProf = event.target.dataset.idProfissional;
+                const nomeProf = event.target.dataset.nomeProfissional;
+                idProfissionalSelecionado = idProf;
+                //forms de agendamento com nome do profissional
+                profissionalNome.textContent = nomeProf;
+                formAgendamento.style.display = "block";
+                //esconde busca
+                resultadoBusca.innerHTML = "";
+                campoBusca.value = "";
+                formAgendamento.scrollIntoView({ behavior: "smooth" });
+                // carrega serv do prof
+                carregarServicos(idProf);
+            }
+        });
+
+        //carregar serv do prof
+        function carregarServicos(idProf) {
+            selectServico.innerHTML = "<option>Carregando serviços...</option>";
+            selectHora.innerHTML = "";
+
+            fetch(`../phpAPIs/getProfissionalServico.php?id_profissional=${idProf}`)
+                .then(resp => resp.json())
+                .then(data => {
+                    if (!data.sucesso) throw new Error(data.mensagem);
+                    
+                    selectServico.innerHTML = "<option value=''>Selecione um serviço...</option>";
+                    data.dados.forEach(s => {
                         const opt = document.createElement("option");
-                        opt.value = s.id_profissional_servico;
-                        opt.textContent = `${s.nome_servico} — R$${s.preco}`;
-                        select.appendChild(opt);
+                        //valor = id do serv+prof
+                        opt.value = s.id_profissional_servico; 
+                        opt.textContent = `${s.nome_servico} (R$ ${s.preco}) - ${s.duracao_minutos} min`;
+                        selectServico.appendChild(opt);
                     });
+                })
+                .catch(err => {
+                    console.error("Erro ao carregar serviços:", err);
+                    selectServico.innerHTML = "<option>Erro ao carregar serviços</option>";
+                });
+        }
+
+        // horas disponiveid
+        selectServico.addEventListener("change", buscarHorarios);
+        inputData.addEventListener("change", buscarHorarios);
+
+        function buscarHorarios() {
+            const idServico = selectServico.value;
+            const data = inputData.value;
+
+            // So busca se ambos estao preenchidos
+            if (idServico && data && idProfissionalSelecionado) {
+                selectHora.innerHTML = "<option>Carregando...</option>";
+
+                fetch(`../phpAPIs/getHorariosDisp.php?id_profissional_servico=${idServico}&data=${data}`)
+                    .then(resp => resp.json())
+                    .then(data => {
+                        if (!data.sucesso) throw new Error(data.mensagem);
+
+                        selectHora.innerHTML = "";
+                        if (data.horarios.length === 0) {
+                            selectHora.innerHTML = "<option value=''>Nenhum horário disponível</option>";
+                        } else {
+                            data.horarios.forEach(hora => {
+                                const opt = document.createElement("option");
+                                opt.value = hora; 
+                                opt.textContent = hora.substring(0, 5); // tira segs
+                                selectHora.appendChild(opt);
+                            });
+                        }
+                    })
+                    .catch(err => {
+                        console.error("Erro ao buscar horários:", err);
+                        selectHora.innerHTML = `<option value=''>${err.message || "Erro"}</option>`;
                     });
+            }
+        }
+
+
+        //confirmar o agendamento
+        botaoConfirmar.addEventListener("click", () => {
+            const idServico = selectServico.value;
+            const data = inputData.value;
+            const hora = selectHora.value;
+            const observacao = textareaObservacao.value;
+
+            if (!idServico || !data || !hora) {
+                alert("Por favor, selecione o serviço, a data e o horário.");
+                return;
+            }
+
+            //DATETIME para php
+            const dataHoraInicio = `${data} ${hora}`; // 2025-12-20 10:30:00
+
+            const dadosAgendamento = {
+                id_profissional_servico: parseInt(idServico),
+                data_hora_inicio: dataHoraInicio,
+                observacao: observacao
+            };
+
+            fetch('../phpAPIs/CRUD agendamento/postAgendamento.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(dadosAgendamento)
+            })
+            .then(response => response.json())
+            .then(resultado => {
+                if (resultado.sucesso) {
+                    alert(resultado.mensagem);
+                    // limpa + esconde o form
+                    formAgendamento.style.display = "none";
+                    selectServico.innerHTML = "";
+                    inputData.value = "";
+                    selectHora.innerHTML = "";
+                    textareaObservacao.value = "";
+                    idProfissionalSelecionado = null;
+                } else {
+                    alert("Erro: " + resultado.mensagem);
                 }
-        </script>
-    </body>
+            })
+            .catch(err => {
+                console.error("Erro ao agendar:", err);
+                alert("Ocorreu um erro de rede. Tente novamente.");
+            });
+        });
+    </script>
+</body>
 </html>

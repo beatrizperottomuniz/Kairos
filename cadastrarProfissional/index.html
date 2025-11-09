@@ -18,14 +18,12 @@
                         <input class= "campoInput" type="text" placeholder="Insira seu nome" id="nome">
                         <label for="email" class="textoDestaque">Email</label>
                         <input class= "campoInput" type="email" required placeholder="Insira seu email" id="email">
-                        <label for="email" class="textoDestaque"> Senha</label>
+                        <label for="senha" class="textoDestaque"> Senha</label>
                         <input class= "campoInput" type="password" placeholder="Insira sua senha" id="senha">
                         <label for="especialidade" class="textoDestaque">Especialidade</label>
                         <input class= "campoInput" type="text" placeholder="Qual sua especialidade de trabalho" id="especialidade">
                         <label for="biografia" class="textoDestaque">Biografia curta</label>
                         <input class= "campoInput" type="text" placeholder="Até uma linha contando quem você é" id="biografia">
-                        <label for="endereco" class="textoDestaque"> Endereço</label>
-                        <input class= "campoInput" type="text" placeholder="Qual seu endereço de atendimento" id="endereco">
                         <p id="mensagemCadastro"></p>
 
                         <button type="submit" class="botaoSubmit">Cadastrar</button>
@@ -55,10 +53,9 @@
                 const nomeInput = document.getElementById("nome").value;
                 const especialidadeInput = document.getElementById("especialidade").value;
                 const biografiaInput = document.getElementById("biografia").value;
-                const enderecoInput = document.getElementById("endereco").value;
                 const mensagem = document.getElementById("mensagemCadastro");
 
-                fetch('../phpAPIs/usuarioCadastroProfissional.php', {
+                fetch('../phpAPIs/CRUD profissional/postProfissional.php', {
                     //formatando em json e mandando por post
                     method: 'POST',
                     headers: {
@@ -70,7 +67,6 @@
                         senha: senhaInput,
                         especialidade : especialidadeInput,
                         biografia: biografiaInput,
-                        endereco: enderecoInput
                     })
                 })
                 .then(response => response.json())//tratando as promises

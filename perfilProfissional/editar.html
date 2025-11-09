@@ -1,0 +1,295 @@
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <link rel="stylesheet" href="../style.css">
+    </head>
+
+    <body>
+
+        <div class="divPrincipal">
+            <p class="textoTitulo">Perfil</p>
+
+            <div class="duplaBotoes">
+                <button class="botaoSubmit" id="salvar" style="margin-top: 5px;">Salvar informações principais</button>
+                <a class="botaoSubmit" id="excluir" style="margin-top: 5px;" href="index.html">Cancelar</a>
+            </div>
+            <p class="textoDestaque">Informações principais</p>
+            <p class="textoDestaque">Nome completo</p>
+            <input type="text" class="campoInput" id="nome" placeholder="nome">
+
+            <p class="textoDestaque">Email cadastrado</p>
+            <input type="email" class="campoInput" id="email" placeholder="email">
+
+            <p class="textoDestaque">Senha</p>
+            <input type="text" class="campoInput" id="senha" placeholder="senha">
+
+            <p class="textoDestaque">Biografia</p>
+            <input type="text" class="campoInput" id="biografia" placeholder="biografia">
+
+            <p class="textoDestaque">Especialidade</p>
+            <input type="text" class="campoInput" id="especialidade" placeholder="especialidade">
+
+            <p class="textoDestaque">Locais</p>
+            <button class="botaoSubmit" id="adicionarLocal" style="margin-bottom: 10px;">Adicionar Local</button>
+            <div id="locais">
+                <p>carregando...</p>
+            </div>
+
+        </div>
+
+    <script>
+
+        function escapeHTML(str) {
+            if (str === null || str === undefined) return '';
+            return str.toString()
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#039;');
+        }
+
+        function carregarLocais() {
+            fetch("../phpAPIs/CRUD local/getLocal.php")
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data);
+                    const divLocais = document.getElementById("locais");
+                    divLocais.innerHTML = "";
+
+                    if (!data.sucesso || data.dados.length === 0) {
+                        divLocais.innerHTML = "<p>Nenhum local cadastrado.</p>";
+                        return;
+                    }
+
+                    let html = "<ul>";
+                    data.dados.forEach(local => {
+                        html += `
+                            <li data-id="${local.id_local}">
+                                <div class="divAgendamento">
+                                    <div>
+                                        <p class="textoDestaque">Tipo: ${local.tipo_local}</p>
+                                        <p class="textoComum">Endereço: ${escapeHTML(local.endereco || '—')}</p>
+                                        <p class="textoComum">CEP: ${escapeHTML(local.CEP || '—')}</p>
+                                        <p class="textoComum">Obs: ${escapeHTML(local.observacoes || '—')}</p>
+                                    </div>
+                                    <div class="duplaBotoesPaginasInternas">
+                                        <button class="botaoSubmit" onclick="editarLocal(${local.id_local}, this)">Editar</button>
+                                        <button class="botaoSubmit" onclick="deletarLocal(${local.id_local})">Excluir</button>
+                                    </div>
+                                </div>
+                            </li>
+                        `;
+                    });
+                    html += "</ul>";
+                    divLocais.innerHTML = html;
+                })
+                .catch(err => {
+                    console.error(err);
+                    document.getElementById("locais").innerHTML = "<p>Erro ao carregar locais.</p>";
+                });
+        }
+
+        document.getElementById("adicionarLocal").addEventListener("click", () => {
+            const divLocais = document.getElementById("locais");
+
+            //sem mais de um forms ao mesmo tempo
+            if (document.getElementById("novoLocalForm")) return;
+
+            const formHTML = `
+                <div class="divAgendamento" id="novoLocalForm">
+                    <select id="novo_tipo_local" class="campoInput">
+                        <option value="" disabled selected>Selecione o tipo</option>
+                        <option value="presencial">Presencial</option>
+                        <option value="domicilio">Domicílio</option>
+                        <option value="online">Online</option>
+                    </select>
+                    <input type="text" id="novo_endereco" class="campoInput" placeholder="Endereço">
+                    <input type="text" id="novo_CEP" class="campoInput" placeholder="CEP">
+                    <input type="text" id="novo_observacoes" class="campoInput" placeholder="Observações">
+
+                    <button class="botaoSubmit" onclick="salvarNovoLocal()">Salvar</button>
+                    <button class="botaoSubmit" onclick="cancelarNovoLocal()">Cancelar</button>
+                </div>
+            `;
+
+            divLocais.insertAdjacentHTML("afterbegin", formHTML);
+        });
+
+        function cancelarNovoLocal() {
+            const form = document.getElementById("novoLocalForm");
+            if (form) form.remove();
+        }
+
+        function salvarNovoLocal() {
+            const tipo_local = document.getElementById("novo_tipo_local").value.trim();
+            const endereco = document.getElementById("novo_endereco").value.trim();
+            const CEP = document.getElementById("novo_CEP").value.trim();
+            const observacoes = document.getElementById("novo_observacoes").value.trim();
+
+            if (!tipo_local) return alert("O tipo de local é obrigatório.");
+
+            fetch("../phpAPIs/CRUD%20local/postLocal.php", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ tipo_local, endereco, CEP, observacoes })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.sucesso) {
+                    alert("Local adicionado com sucesso!");
+                    carregarLocais();
+                } else {
+                    alert("Erro: " + data.mensagem);
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert("Erro ao adicionar local.");
+            });
+        }
+
+
+        function editarLocal(id_local, botao) {
+            const li = botao.closest("li");
+            const campos = li.querySelectorAll("p");
+            const dados = {};
+
+            campos.forEach(p => {
+                const texto = p.textContent.split(":");
+                let chave = texto[0].trim().toLowerCase();
+                const valor = texto[1]?.trim() || "";
+                if (chave == "endereço"){
+                    const chave1 = "endereco";
+                }
+                const chave1 = chave;
+                dados[chave1] = valor;
+            });
+
+            li.innerHTML = `
+                <div class="divAgendamento">
+                    <select id="tipo_local_${id_local}" class="campoInput">
+                        <option value="presencial" ${dados.tipo === "presencial" ? "selected" : ""}>Presencial</option>
+                        <option value="domicilio" ${dados.tipo === "domicilio" ? "selected" : ""}>Domicílio</option>
+                        <option value="online" ${dados.tipo === "online" ? "selected" : ""}>Online</option>
+                    </select>
+                    <input type="text" id="endereco_${id_local}" class="campoInput" value="${dados.endereco || ''}" placeholder="Endereço">
+                    <input type="text" id="cep_${id_local}" class="campoInput" value="${dados.cep || ''}" placeholder="CEP">
+                    <input type="text" id="observacoes_${id_local}" class="campoInput" value="${dados.obs || ''}" placeholder="Observações">
+                    <button class="botaoSubmit" onclick="salvarEdicao(${id_local})">Salvar</button>
+                    <button class="botaoSubmit" onclick="carregarLocais()">Cancelar</button>
+                </div>
+            `;
+        }
+
+        function salvarEdicao(id_local) {
+            const tipo_local = document.getElementById(`tipo_local_${id_local}`).value.trim();
+            const endereco = document.getElementById(`endereco_${id_local}`).value.trim();
+            const CEP = document.getElementById(`cep_${id_local}`).value.trim();
+            const observacoes = document.getElementById(`observacoes_${id_local}`).value.trim();
+
+            if (!tipo_local) return alert("O tipo de local é obrigatório.");
+
+            fetch("../phpAPIs/CRUD local/putLocal.php", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id_local, tipo_local, endereco, CEP, observacoes })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.sucesso) {
+                    alert("Local atualizado com sucesso!");
+                    carregarLocais();
+                } else {
+                    alert("Erro: " + data.mensagem);
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert("Erro ao atualizar local.");
+            });
+        }
+
+
+        function deletarLocal(id_local) {
+            if (!confirm("Tem certeza que deseja excluir este local?")) return;
+
+            fetch("../phpAPIs/CRUD local/deleteLocal.php", {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id_local })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.sucesso) {
+                    alert("Local excluído com sucesso!");
+                    carregarLocais();
+                } else {
+                    alert("Erro: " + data.mensagem);
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert("Erro ao excluir local.");
+            });
+        }
+
+        // carrega perfil e locais
+        document.addEventListener("DOMContentLoaded", () => {
+            fetch("../phpAPIs/CRUD profissional/getProfissional.php")
+                .then(response => response.json())
+                .then(data => {
+                    if (data.sucesso) {
+                        const dados = data.dados[0].profissional;
+                        document.getElementById("nome").value = dados.nome;
+                        document.getElementById("email").value = dados.email;
+                        document.getElementById("senha").value = dados.senha;
+                        document.getElementById("especialidade").value = dados.especialidade;
+                        document.getElementById("biografia").value = dados.biografia;
+                    } else {
+                        document.body.innerHTML = `<p>Erro: ${data.erro || "Usuário não encontrado."}</p>`;
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    document.body.innerHTML = "<p>Erro ao carregar os dados do usuário.</p>";
+                });
+
+            document.getElementById("salvar").addEventListener("click", () => {
+                const nome = document.getElementById("nome").value.trim();
+                const email = document.getElementById("email").value.trim();
+                const senha = document.getElementById("senha").value.trim();
+                const biografia = document.getElementById("biografia").value.trim();
+                const especialidade = document.getElementById("especialidade").value.trim();
+
+                if (!nome || !email || !senha) {
+                    alert("Preencha nome, email e senha.");
+                    return;
+                }
+
+                fetch("../phpAPIs/CRUD profissional/putProfissional.php", {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ nome, email, senha, especialidade, biografia })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.sucesso) {
+                        alert("Dados atualizados com sucesso!");
+                        window.location.href = "index.html";
+                    } else {
+                        alert("Erro: " + data.mensagem);
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert("Erro ao atualizar usuário.");
+                });
+            });
+
+            carregarLocais();
+        });
+        </script>
+    </body>
+</html>
+

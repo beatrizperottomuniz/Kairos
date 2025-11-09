@@ -1,0 +1,196 @@
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <link rel="stylesheet" href="../style.css">
+    </head>
+
+    <body>
+        <header class="headerInterno">
+            <a href="../exportarAgendamentos/index.html" class="linkPag">Exportar</a>
+            <a href="../historicoAgendamentos/index.html" class="linkPag">Histórico</a>
+            <a href="" id = "agenda" class="linkPag">Agenda</a>
+            <a href="../NovoAgendamento/index.html" class="linkPag" id="novoAgendamento" style="display:none;">Novo Agendamento</a>
+            <a href="" id = "perfil" class="linkPag">Perfil</a>
+        </header>
+
+        <div class="divPrincipal">
+            <p class="textoTitulo">Perfil</p>
+
+            <div class="duplaBotoes">
+                <a class="botaoSubmit" style="margin-top: 5px;" href="editar.html">Editar informações</a>
+                <a class="botaoSubmit" style="margin-top: 5px;" href="../phpAPIs/logoutUsuario.php">Logout</a>
+                <button class="botaoSubmit" id="excluir" style="margin-top: 5px;">Excluir conta</button>
+            </div>
+
+            <p class="textoDestaque">Nome completo</p>
+            <p class="textoComum" id="nome">Carregando...</p>
+
+            <p class="textoDestaque">Email cadastrado</p>
+            <p class="textoComum" id="email">Carregando...</p>
+
+            <p class="textoDestaque">Tipo de conta</p>
+            <p class="textoComum" id="tipo">Carregando...</p>
+
+            <p class="textoDestaque">Especialidade</p>
+            <p class="textoComum" id="especialidade">Carregando...</p>
+
+            <p class="textoDestaque">Biografia</p>
+            <p class="textoComum" id="biografia">Carregando...</p>
+
+            <p class="textoDestaque">Média das Avaliações</p>
+            <p class="textoComum" id="media">Carregando...</p>
+
+            <p class="textoDestaque">Locais de Atendimento</p>
+            <ul id="listaLocais" class="lista"></ul>
+
+            <p class="textoDestaque">Serviços Oferecidos</p>
+            <ul id="listaServicos" class="lista"></ul>
+
+            <p class="textoDestaque">Disponibilidades Semanais</p>
+            <ul id="listaDisponibilidades" class="lista"></ul>
+
+            <p class="textoDestaque">Períodos Bloqueados</p>
+            <ul id="listaBloqueios" class="lista"></ul>
+        </div>
+
+    <script>
+            document.addEventListener("DOMContentLoaded", () => {
+                const navBarPerfil = document.getElementById("perfil");
+                const navBarAgenda = document.getElementById("agenda");
+                const navBarNovoAgendamento = document.getElementById("novoAgendamento");
+
+                fetch("../phpAPIs/getInfoUsuario.php")
+                    .then(response => response.json())
+                    .then( data => {
+                        if (data.tipo_conta == "profissional") {
+                            navBarNovoAgendamento.style.display = "none";
+                            navBarPerfil.href = "../perfilProfissional/index.html";
+                            navBarAgenda.href = "../telaPrincipalProfissional/index.html";
+                        } else {
+                            navBarNovoAgendamento.style.display = "block";
+                            navBarPerfil.href = "../perfilCliente/index.html";
+                            navBarAgenda.href = "../telaPrincipalCliente/index.html";
+                        }
+                    })
+                    .catch(err => {
+                        console.error("Erro no fetch:", err);
+                    });
+
+                fetch("../phpAPIs/CRUD profissional/getProfissional.php")
+                    .then(response => response.json())
+                    .then(data => {
+                        if (!data.sucesso || data.dados.length === 0) {
+                            document.body.innerHTML = `<p>Erro: ${data.mensagem || "Usuário não encontrado ou sem dados."}</p>`;
+                            return;
+                        }
+
+                        const dados = data.dados;
+                        
+
+                        const firstItem = dados[0];
+                        const usuario = firstItem.profissional;
+                        document.getElementById("nome").textContent = usuario.nome;
+                        document.getElementById("email").textContent = usuario.email;
+                        document.getElementById("tipo").textContent = "profissional";
+                        document.getElementById("especialidade").textContent = usuario.especialidade;
+                        document.getElementById("biografia").textContent = usuario.biografia;
+                        document.getElementById("media").textContent = parseFloat(usuario.media_avaliacoes).toFixed(2);
+
+                        const listaLocais = document.getElementById("listaLocais");
+                        const listaServicos = document.getElementById("listaServicos");
+                        const listaDisp = document.getElementById("listaDisponibilidades");
+                        const listaBloq = document.getElementById("listaBloqueios");
+                        
+                        listaLocais.innerHTML = "";
+                        listaServicos.innerHTML = "";
+                        listaDisp.innerHTML = "";
+                        listaBloq.innerHTML = "";
+
+
+                        firstItem.disponibilidades.forEach(d => {
+                            if(d) { 
+                                const dispLi = document.createElement("li");
+                                dispLi.className = "textoComum";
+                                dispLi.textContent = d;
+                                listaDisp.appendChild(dispLi);
+                            }
+                        });
+
+                        firstItem.bloqueios.forEach(b => {
+                            if(b) { 
+                                const bloqLi = document.createElement("li");
+                                bloqLi.className = "textoComum";
+                                bloqLi.textContent = b;
+                                listaBloq.appendChild(bloqLi);
+                            }
+                        });
+
+                        //sets para evitar duplicatas
+                        const servicosUnicos = new Set();
+                        const locaisUnicos = new Set();
+
+                        dados.forEach(item => {
+                            const servico = item.servico;
+                            const ps = item.profissional_servico;
+                            if (servico.nome_servico) {
+                                const servicoTexto = `${servico.nome_servico} - ${ps.descricao_adicional} - R$${ps.preco} (${ps.duracao_minutos} min)`;
+                                servicosUnicos.add(servicoTexto);
+                            }
+
+                            const local = item.local_atendimento;
+                            
+                            // Se 'tipo_local' existir, significa que um local foi encontrado.
+                            if (local.tipo_local) { 
+                                const enderecoTexto = local.endereco 
+                                    ? `${local.endereco} (${local.CEP || "CEP não informado"})` 
+                                    : "Endereço não especificado"; 
+                                    
+                                const localTexto = `${local.tipo_local}: ${enderecoTexto} - ${local.observacoes || ""}`;
+                                locaisUnicos.add(localTexto);
+                            }
+                        });
+
+                        servicosUnicos.forEach(texto => {
+                            const servicoLi = document.createElement("li");
+                            servicoLi.className = "textoComum";
+                            servicoLi.textContent = texto;
+                            listaServicos.appendChild(servicoLi);
+                        });
+
+                        locaisUnicos.forEach(texto => {
+                            const localLi = document.createElement("li");
+                            localLi.className = "textoComum";
+                            localLi.textContent = texto;
+                            listaLocais.appendChild(localLi);
+                        });
+
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        document.body.innerHTML = "<p>Erro ao carregar os dados do usuário.</p>";
+                    });
+            });
+
+            document.getElementById("excluir").addEventListener("click", () => {
+                if (confirm("Tem certeza que deseja excluir sua conta? Esta ação não poderá ser desfeita.")) {
+                    fetch("../phpAPIs/CRUD profissional/deleteProfissional.php", {
+                        method: "DELETE"
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.sucesso) {
+                            alert("Conta excluída com sucesso!");
+                            window.location.href = "../index.html";
+                        } else {
+                            alert("Erro: " + (data.mensagem || "Falha ao excluir conta."));
+                        }
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        alert("Erro no servidor ao excluir a conta.");
+                    });
+                }
+            });
+        </script>
+    </body>
+</html>

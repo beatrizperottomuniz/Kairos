@@ -6,11 +6,11 @@
 
     <body>
         <header class="headerInterno">
-            <a href="../ExportarHistorico/index.html" class="linkPag">Exportar</a>
-            <a href="cadastrarProfissional/index.html" class="linkPag">Histórico</a>
-            <a href="#" class="linkPag">Agenda</a>
-            <a href="../NovoAgendamento/index.html" class="linkPag">Novo Agendamento</a>
-            <a href="cadastrarCliente/index.html" class="linkPag">Perfil</a>
+            <a href="../exportarAgendamentos/index.html" class="linkPag">Exportar</a>
+            <a href="../historicoAgendamentos/index.html" class="linkPag">Histórico</a>
+            <a href="" id = "agenda" class="linkPag">Agenda</a>
+            <a href="../NovoAgendamento/index.html" class="linkPag" id="novoAgendamento" style="display:none;">Novo Agendamento</a>
+            <a href="" id = "perfil" class="linkPag">Perfil</a>
         </header>
 
         <div class="divPrincipal">
@@ -34,6 +34,27 @@
 
         <script>
             document.addEventListener("DOMContentLoaded", () => {
+                const navBarPerfil = document.getElementById("perfil");
+                const navBarAgenda = document.getElementById("agenda");
+                const navBarNovoAgendamento = document.getElementById("novoAgendamento");
+
+                fetch("../phpAPIs/getInfoUsuario.php")
+                    .then(response => response.json())
+                    .then( data => {
+                        if (data.tipo_conta == "profissional") {
+                            navBarNovoAgendamento.style.display = "none";
+                            navBarPerfil.href = "../perfilProfissional/index.html";
+                            navBarAgenda.href = "../telaPrincipalProfissional/index.html";
+                        } else {
+                            navBarNovoAgendamento.style.display = "block";
+                            navBarPerfil.href = "../perfilCliente/index.html";
+                            navBarAgenda.href = "../telaPrincipalCliente/index.html";
+                        }
+                    })
+                    .catch(err => {
+                        console.error("Erro no fetch:", err);
+                    });
+
                 fetch("../phpAPIs/CRUD cliente/getCliente.php")
                     .then(response => response.json())
                     .then(data => {
@@ -61,7 +82,7 @@
                     .then(data => {
                         if (data.sucesso) {
                             alert("Conta excluída com sucesso!");
-                            window.location.href = "../index.html"; // Redireciona para a landing page
+                            window.location.href = "../index.html"; // redireciona para a landing page
                         } else {
                             alert("Erro: " + (data.mensagem || "Falha ao excluir conta."));
                         }

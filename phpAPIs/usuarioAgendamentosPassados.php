@@ -17,44 +17,52 @@
 
 
     if($_SERVER["REQUEST_METHOD"]=="GET"){
+        //tipo da conta (cliente ou profissional)
+        $queryTipo = $conn->prepare("SELECT tipo_conta FROM Usuario WHERE id_usuario = ?");
+        $queryTipo->bind_param("i", $idDoUsuarioLogado);
+        $queryTipo->execute();
+        $resultTipo = $queryTipo->get_result();
+        $tipoConta = $resultTipo->fetch_assoc()['tipo_conta'] ?? null;
+        $queryTipo->close();
 
-        $dataFiltro = $_GET['data'] ?? null;
+        if (!$tipoConta) {
+            echo json_encode(['sucesso' => false, 'mensagem' => 'Usuário não encontrado.']);
+            exit();
+        }
 
+        //COALESCE = primeiro valor nao nulo
         $stmt = "SELECT
                 A.id_agendamento,
                 A.data_hora_inicio,
                 A.data_hora_fim,          
                 A.status,                 
-                S.nome_servico,
-                PS.duracao_minutos,        
-                U_Prof.nome AS nome_profissional
+                A.nome_servico,
+                COALESCE(PS.duracao_minutos, 0) AS duracao_minutos,        
+                COALESCE(U_Prof.nome, 'Profissional deletado') AS nome_profissional,
+                COALESCE(U_Cliente.nome, 'Cliente deletado') AS nome_cliente
             FROM
                 Agendamento AS A
-            JOIN
+            LEFT JOIN
                 Profissional_Servico AS PS ON A.id_profissional_servico = PS.id_profissional_servico
-            JOIN
+            LEFT JOIN
                 Servico AS S ON PS.id_servico = S.id_servico
-            JOIN
+            LEFT JOIN
                 Usuario AS U_Prof ON PS.id_usuario_profissional = U_Prof.id_usuario
-            WHERE
-                A.id_cliente = ? AND A.status != 'Cancelado' AND A.status != 'Concluido'";
-        
-        
-        
-        if ($dataFiltro) {
-            // Se tem filtro, adiciona o SQL e usa o bind "is"
-            $stmt .= " AND DATE(A.data_hora_inicio) = ?";
-            $stmt .= " ORDER BY A.data_hora_inicio ASC";
+            LEFT JOIN
+                Usuario AS U_Cliente ON A.id_cliente = U_Cliente.id_usuario
+            ";
 
-            $stmt_preparado = $conn->prepare($stmt);
-            $stmt_preparado->bind_param("is", $idDoUsuarioLogado, $dataFiltro);
-
+        if ($tipoConta === 'cliente') {
+            $stmt .= " WHERE A.id_cliente = ?";
         } else {
-            $stmt .= " ORDER BY A.data_hora_inicio ASC";
-
-            $stmt_preparado = $conn->prepare($stmt);
-            $stmt_preparado->bind_param("i", $idDoUsuarioLogado);
+            $stmt .= " WHERE PS.id_usuario_profissional  = ?";
         }
+        
+        $stmt .= " ORDER BY A.data_hora_inicio ASC";
+
+        $stmt_preparado = $conn->prepare($stmt);
+        $stmt_preparado->bind_param("i", $idDoUsuarioLogado);
+        
 
         $stmt_preparado->execute();
         $resultado = $stmt_preparado->get_result();

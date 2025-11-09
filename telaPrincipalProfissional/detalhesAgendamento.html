@@ -7,39 +7,65 @@
     <body>
 
         <header class="headerInterno">
-            <a href="../ExportarHistorico/index.html" class="linkPag">Exportar</a>
-            <a href="cadastrarProfissional/index.html" class="linkPag">Histórico</a>
-            <a href="#" class="linkPag">Agenda</a>
-            <a href="cadastrarCliente/index.html" class="linkPag">Perfil</a>
+            <a href="../exportarAgendamentos/index.html" class="linkPag">Exportar</a>
+            <a href="../historicoAgendamentos/index.html" class="linkPag">Histórico</a>
+            <a href="" id = "agenda" class="linkPag">Agenda</a>
+            <a href="../NovoAgendamento/index.html" class="linkPag" id="novoAgendamento" style="display:none;">Novo Agendamento</a>
+            <a href="" id = "perfil" class="linkPag">Perfil</a>
         </header>
 
         <div class="divPrincipal">
             <p class="textoTitulo">Detalhes do Agendamento</p>
-            <p><strong>Data:</strong> <span id="data"></span></p>
-            <p><strong>Hora início:</strong> <span id="horaInicio"></span></p>
-            <p><strong>Hora fim:</strong> <span id="horaFim"></span></p>
-            <p><strong>Cliente:</strong> <span id="cliente"></span></p>
-            <p><strong>Serviço:</strong> <span id="servico"></span></p>
-            <p><strong>Status:</strong> <span id="status"></span></p>
+            <p class="textoDestaque">Data: <span class="textoComum" id="data"></span></p>
+            <p class="textoDestaque">Hora início: <span class="textoComum" id="horaInicio"></span></p>
+            <p class="textoDestaque">Hora fim: <span class="textoComum" id="horaFim"></span></p>
+            <p class="textoDestaque">Cliente: <span class="textoComum" id="cliente"></span></p>
+            <p class="textoDestaque">Serviço: <span class="textoComum" id="servico"></span></p>
+            <p class="textoDestaque">Status: <span class="textoComum" id="status"></span></p>
+            <p class="textoDestaque">Observação: <span class="textoComum" id="observacao"></span></p>
+            <p class="textoDestaque">Custo: <span class="textoComum" id="custo"></span></p>
+            <p class="textoDestaque">Duração: <span class="textoComum" id="duracao"></span></p>
 
             <button class="botaoSubmit" id="cancelarBtn" style="display:none; margin-top:50px;">Cancelar Agendamento</button>
         </div>
 
         <script>
-            document.addEventListener("DOMContentLoaded", function() {
+            document.addEventListener("DOMContentLoaded", () => {
                 const params = new URLSearchParams(window.location.search);
                 const id = params.get("id");
+
+                const navBarPerfil = document.getElementById("perfil");
+                const navBarAgenda = document.getElementById("agenda");
+                const navBarNovoAgendamento = document.getElementById("novoAgendamento");
+
+                fetch("../phpAPIs/getInfoUsuario.php")
+                    .then(response => response.json())
+                    .then( data => {
+                        if (data.tipo_conta == "profissional") {
+                            navBarNovoAgendamento.style.display = "none";
+                            navBarPerfil.href = "../perfilProfissional/index.html";
+                            navBarAgenda.href = "../telaPrincipalProfissional/index.html";
+                        } else {
+                            navBarNovoAgendamento.style.display = "block";
+                            navBarPerfil.href = "../perfilCliente/index.html";
+                            navBarAgenda.href = "../telaPrincipalCliente/index.html";
+                        }
+                    })
+                    .catch(err => {
+                        console.error("Erro no fetch:", err);
+                    });
 
                 if (!id) {
                     document.body.innerHTML = "<p>Agendamento não encontrado.</p>";
                     return;
                 }
 
-                fetch(`../phpAPIs/CRUD_agendamento/getAgendamento.php?id=${id}`)
+                fetch(`../phpAPIs/CRUD agendamento/getAgendamento.php?id=${id}`)
                     .then(response => response.json())
                     .then(data => {
                         console.log(data)
                         if (data.sucesso) {
+                            console.log(data);
                             const ag = data.agendamento;
                             document.getElementById("data").textContent = new Date(ag.data_hora_inicio).toLocaleDateString("pt-BR");
                             document.getElementById("horaInicio").textContent = new Date(ag.data_hora_inicio).toLocaleTimeString("pt-BR");
@@ -47,6 +73,10 @@
                             document.getElementById("cliente").textContent = ag.nome_cliente;
                             document.getElementById("servico").textContent = ag.nome_servico;
                             document.getElementById("status").textContent = ag.status;
+
+                            document.getElementById("observacao").textContent = ag.observacao || "—";
+                            document.getElementById("custo").textContent = ag.preco ? parseFloat(ag.preco).toFixed(2) : "—";
+                            document.getElementById("duracao").textContent = ag.duracao_minutos || "—";
 
                             if (ag.status !== "Cancelado" && ag.status !== "Concluido") {
                                 document.getElementById("cancelarBtn").style.display = "inline-block";
@@ -62,12 +92,12 @@
 
                 document.getElementById("cancelarBtn").addEventListener("click", function() {
                     if (confirm("Tem certeza que deseja cancelar este agendamento?")) {
-                        fetch("../phpAPIs/CRUD_agendamento/deleteAgendamento.php", {
+                        fetch("../phpAPIs/CRUD agendamento/deleteAgendamento.php", {
                             method: "PUT",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({ id_agendamento: id })
                         })
-                        .then(r => r.text()) // 
+                        .then(r => r.text())  
                         .then(txt => {
                             try {
                                 const res = JSON.parse(txt);

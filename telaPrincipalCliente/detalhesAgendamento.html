@@ -5,29 +5,72 @@
     </head>
 
     <body>
-        <h1>Detalhes do Agendamento</h1>
-        <p><strong>Data:</strong> <span id="data"></span></p>
-        <p><strong>Hora início:</strong> <span id="horaInicio"></span></p>
-        <p><strong>Hora fim:</strong> <span id="horaFim"></span></p>
-        <p><strong>Cliente:</strong> <span id="cliente"></span></p>
-        <p><strong>Serviço:</strong> <span id="servico"></span></p>
-        <p><strong>Status:</strong> <span id="status"></span></p>
 
+        <header class="headerInterno">
+            <a href="../exportarAgendamentos/index.html" class="linkPag">Exportar</a>
+            <a href="../historicoAgendamentos/index.html" class="linkPag">Histórico</a>
+            <a href="" id = "agenda" class="linkPag">Agenda</a>
+            <a href="../NovoAgendamento/index.html" class="linkPag" id="novoAgendamento" style="display:none;">Novo Agendamento</a>
+            <a href="" id = "perfil" class="linkPag">Perfil</a>
+        </header>
 
+        <div class="divPrincipal">
+            <p class="textoTitulo">Detalhes do Agendamento</p>
+            <p class="textoDestaque">Data: <span class="textoComum" id="data"></span></p>
+            <p class="textoDestaque">Hora início: <span class="textoComum" id="horaInicio"></span></p>
+            <p class="textoDestaque">Hora fim: <span class="textoComum" id="horaFim"></span></p>
+            <p class="textoDestaque">Profissional: <span class="textoComum" id="profissional"></span></p>
+            <p class="textoDestaque">Serviço: <span class="textoComum" id="servico"></span></p>
+            <p class="textoDestaque">Status: <span class="textoComum" id="status"></span></p>
+            
+            <p class="textoDestaque">Observação: 
+                <span class="textoComum" id="observacao"></span>
+            </p>
+
+            <!-- campo para editar obs -->
+            <input id="novaObservacao" class="campoInput"  style="display:none;" placeholder="Editar observação...">
+            <button class="botaoSubmit" id="salvarObsBtn" style="display:none; margin-top:10px;">Salvar Observação</button>
+
+            <p class="textoDestaque">Custo: <span class="textoComum" id="custo"></span></p>
+            <p class="textoDestaque">Duração: <span class="textoComum" id="duracao"></span></p>
+            <p class="textoDestaque">Endereço: <span class="textoComum" id="endereco"></span></p>
+
+            <button class="botaoSubmit" id="editarObsBtn" style="display:none; margin-top:30px;">Editar Observação</button>
+            <button class="botaoSubmit" id="cancelarBtn" style="display:none; margin-top:20px;">Cancelar Agendamento</button>
+        </div>
 
         <script>
-
-            document.addEventListener("DOMContentLoaded", function() {
-                // pega o id que veio na URL, ex: detalhesAgendamento.html?id=7
+            document.addEventListener("DOMContentLoaded", () => {
                 const params = new URLSearchParams(window.location.search);
                 const id = params.get("id");
+
+                const navBarPerfil = document.getElementById("perfil");
+                const navBarAgenda = document.getElementById("agenda");
+                const navBarNovoAgendamento = document.getElementById("novoAgendamento");
+
+                fetch("../phpAPIs/getInfoUsuario.php")
+                    .then(response => response.json())
+                    .then(function(data) {
+                        if (data.tipo_conta == "profissional") {
+                            navBarNovoAgendamento.style.display = "none";
+                            navBarPerfil.href = "../perfilProfissional/index.html";
+                            navBarAgenda.href = "../telaPrincipalProfissional/index.html";
+                        } else {
+                            navBarNovoAgendamento.style.display = "block";
+                            navBarPerfil.href = "../perfilCliente/index.html";
+                            navBarAgenda.href = "../telaPrincipalCliente/index.html";
+                        }
+                    })
+                    .catch(err => {
+                        console.error("Erro no fetch:", err);
+                    });
 
                 if (!id) {
                     document.body.innerHTML = "<p>Agendamento não encontrado.</p>";
                     return;
                 }
 
-                fetch(`../phpAPIs/CRUD_agendamento/getAgendamento.php?id=${id}`)
+                fetch(`../phpAPIs/CRUD agendamento/getAgendamento.php?id=${id}`)
                     .then(response => response.json())
                     .then(data => {
                         if (data.sucesso) {
@@ -35,9 +78,18 @@
                             document.getElementById("data").textContent = new Date(ag.data_hora_inicio).toLocaleDateString("pt-BR");
                             document.getElementById("horaInicio").textContent = new Date(ag.data_hora_inicio).toLocaleTimeString("pt-BR");
                             document.getElementById("horaFim").textContent = new Date(ag.data_hora_fim).toLocaleTimeString("pt-BR");
-                            document.getElementById("cliente").textContent = ag.nome_cliente;
+                            document.getElementById("profissional").textContent = ag.profissional;
                             document.getElementById("servico").textContent = ag.nome_servico;
                             document.getElementById("status").textContent = ag.status;
+                            document.getElementById("endereco").textContent = ag.endereco_agendamento;
+                            document.getElementById("observacao").textContent = ag.observacao || "—";
+                            document.getElementById("custo").textContent = ag.preco ? parseFloat(ag.preco).toFixed(2) : "—";
+                            document.getElementById("duracao").textContent = ag.duracao_minutos || "—";
+
+                            if (ag.status !== "Cancelado" && ag.status !== "Concluido") {
+                                document.getElementById("cancelarBtn").style.display = "inline-block";
+                                document.getElementById("editarObsBtn").style.display = "inline-block";
+                            }
                         } else {
                             document.body.innerHTML = `<p>Erro: ${data.mensagem}</p>`;
                         }
@@ -46,8 +98,72 @@
                         console.error(err);
                         document.body.innerHTML = "<p>Erro ao carregar os detalhes.</p>";
                     });
-            });
 
+                // editar obs
+                document.getElementById("editarObsBtn").addEventListener("click", function() {
+                    const obsAtual = document.getElementById("observacao").textContent;
+                    document.getElementById("novaObservacao").style.display = "block";
+                    document.getElementById("novaObservacao").value = obsAtual === "—" ? "" : obsAtual;
+                    document.getElementById("salvarObsBtn").style.display = "block";
+                    this.style.display = "none";
+                });
+
+                // salvar obs
+                document.getElementById("salvarObsBtn").addEventListener("click", function() {
+                    const novaObs = document.getElementById("novaObservacao").value;
+                    fetch("../phpAPIs/CRUD agendamento/putAgendamento.php", {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ id_agendamento: id, observacao: novaObs })
+                    })
+                    .then(r => r.json())
+                    .then(res => {
+                        if (res.sucesso) {
+                            alert("Observação atualizada com sucesso!");
+                            document.getElementById("observacao").textContent = novaObs || "—";
+                            document.getElementById("novaObservacao").style.display = "none";
+                            document.getElementById("salvarObsBtn").style.display = "none";
+                            document.getElementById("editarObsBtn").style.display = "inline-block";
+                        } else {
+                            alert("Erro ao atualizar: " + res.mensagem);
+                        }
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        alert("Erro ao salvar observação.");
+                    });
+                });
+
+                // cancelar agendamento
+                document.getElementById("cancelarBtn").addEventListener("click", function() {
+                    if (confirm("Tem certeza que deseja cancelar este agendamento?")) {
+                        fetch("../phpAPIs/CRUD agendamento/deleteAgendamento.php", {
+                            method: "PUT",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ id_agendamento: id })
+                        })
+                        .then(r => r.text())
+                        .then(txt => {
+                            try {
+                                const res = JSON.parse(txt);
+                                if (res.sucesso) {
+                                    alert("Agendamento cancelado com sucesso!");
+                                    window.location.href = "../telaPrincipalProfissional/index.html";
+                                } else {
+                                    alert("Erro: " + res.mensagem);
+                                }
+                            } catch (e) {
+                                console.error("Resposta inesperada do servidor:", txt);
+                                alert("Erro no servidor (ver console).");
+                            }
+                        })
+                        .catch(err => {
+                            console.error(err);
+                            alert("Erro ao cancelar agendamento.");
+                        });
+                    }
+                });
+            });
         </script>
     </body>
 </html>

@@ -5,7 +5,6 @@
     </head>
 
     <body>
-
         <header class="headerInterno">
             <a href="../exportarAgendamentos/index.html" class="linkPag">Exportar</a>
             <a href="../historicoAgendamentos/index.html" class="linkPag">Histórico</a>
@@ -15,18 +14,11 @@
         </header>
 
         <div class="divPrincipal">
-            <p class="textoTitulo">Seus agendamentos</p>
-            <p class = "textoDestaque" style=" margin-bottom: 5px;">Dia</p>
-            <div class="duplaBotoes">
-                <input type="date" class="campoInput" id="filtro" style="width: 200px; height: 30px;">
-                <button class="botaoSubmit" id="btn_filtro" style=" margin-top: 5px; height:30px; width: 100px;">Filtrar</button>
-                <button class="botaoSubmit" id="limpar" style=" margin-top: 5px; height: 30px; width: 100px;">Limpar</button>
-            </div>
-            
+            <p class="textoTitulo">Histórico</p>            
             <div id="resultado">
-                <p>Carregando...</p>
+                <p>carregando...</p>
             </div>
-            
+
         </div>
 
         <script>
@@ -41,15 +33,9 @@
                         .replace(/'/g, '&#039;');
             }
 
-            function pegarAgendamentos() {
-                const filtroData = document.getElementById("filtro").value;
+            function pegarAgendamentos(tipoConta) {
 
-                let url = "../phpAPIs/usuarioAgendamentosCliente.php";
-
-                // se data adicionada = coloca na Url
-                if (filtroData) {
-                    url += `?data=${filtroData}`; 
-                }
+                let url = "../phpAPIs/usuarioAgendamentosPassados.php";
 
                 fetch(url)
                 .then(response => response.json())
@@ -63,7 +49,7 @@
                         const agendamentosFiltrados = data.agendamentos.filter(ag => {
                             const dataInicio = new Date(ag.data_hora_inicio);
                             const agendamentoData = new Date(dataInicio.getFullYear(), dataInicio.getMonth(), dataInicio.getDate());
-                            return agendamentoData >= hojeData;
+                            return agendamentoData < hojeData;
                         });
 
                         let html = '<ul>';
@@ -72,11 +58,22 @@
                             day: '2-digit', month: '2-digit', year: 'numeric'
                             });
                             
-                            let botaoConfirmar = "";
-                            if (ag.status === "Confirmado") {
-                                botaoConfirmar = `<button class="botaoSubmit" disabled style="background-color:#A0A0A0;">Confirmado</button>`;
-                            } else {
-                                botaoConfirmar = `<button class="botaoSubmit" onclick="confirmarAgendamento('${ag.id_agendamento}', this)">Confirmar</button>`;
+                            //se for do tipo cliente, estiver concluido e ainda tiver um profissional pra ser avaliado, temos a secao de avaliacao
+                            let secaoAvaliacao = "";
+                            if (ag.status === "Concluido" && tipoConta === "cliente" && ag.nome_profissional != "Profissional deletado") {
+                                secaoAvaliacao = `
+                                <div class="duplaBotoes" id="avaliacao_${ag.id_agendamento}">
+                                    <label class="textoDestaque" for="nota_${ag.id_agendamento}">Escolha uma opção:</label>
+                                    <select class="campoInput" id="nota_${ag.id_agendamento}" style="width: 200px; height: 30px;">
+                                        <option value="1">1</option>
+                                        <option value="2">2</option>
+                                        <option value="3">3</option>
+                                        <option value="4">4</option>
+                                        <option value="5">5</option>
+                                    </select>
+                                    <button class="botaoSubmit" id="botaoAv_${ag.id_agendamento}" onclick="enviarAvaliacao(${ag.id_agendamento})">Enviar Avaliação</button>
+                                </div>
+                                `;
                             }
 
                             const horaFormatada_inicio = new Date(ag.data_hora_inicio).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
@@ -89,22 +86,20 @@
                                         <p class="textoComum">${horaFormatada_inicio} até ${horaFormatada_fim}</p>
                                         <p class="textoDestaque">${escapeHTML(ag.nome_servico)}</p> 
                                         <p class="textoComum">Profissional : ${escapeHTML(ag.nome_profissional)}</p>
+                                        <p class="textoComum">Cliente : ${escapeHTML(ag.nome_cliente)}</p>
                                         <p class="textoComum">Duração : ${ag.duracao_minutos} minutos</p>
                                         <p class="textoComum" id="Agendamento_${ag.id_agendamento}">Situação : ${ag.status}</p>
-                                    </div>
-                                    <div class="duplaBotoesPaginasInternas">
-                                        ${botaoConfirmar}
-                                        <button class="botaoSubmit" onclick="verDetalhes('${ag.id_agendamento}')">Detalhes</button>
+                                        ${secaoAvaliacao}
                                     </div>
                                 </div>
                             </li>`;
                         });
                         html += '</ul>';
                         resultadoDiv.innerHTML = html;
-                    } else if (data.sucesso) {
-                        // Mensagem de "nenhum encontrado"
-                        resultadoDiv.textContent = "Nenhum agendamento encontrado para esta data.";
-                    } else {
+                        //cahama a funcao de atualizar os botoes de avaliacao (se ja foi avaliado ou nao)
+                        atualizarBotoesAvaliacao();
+
+                    }else {
                         resultadoDiv.style.color = 'red';
                         resultadoDiv.textContent = "erro: ${data.mensagem}";
                     }
@@ -114,10 +109,57 @@
                     const resultadoDiv = document.querySelector("#resultado");
                     resultadoDiv.style.color = 'red';
                     resultadoDiv.textContent = "erro ao carregar os dados";
-                });                 
+                });     
             }
 
-            document.addEventListener('DOMContentLoaded', () => {
+            function enviarAvaliacao(id_agendamento) {
+                const select = document.getElementById(`nota_${id_agendamento}`);
+                const nota = select.value;
+
+                fetch("../phpAPIs/CR avaliacao/postAvaliacao.php", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({id_agendamento, nota})
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.sucesso) {
+                        const btn = document.querySelector(`#avaliacao_${id_agendamento} button`);
+                        btn.disabled = true;
+                        btn.style.backgroundColor = "#A0A0A0";
+                        btn.textContent = "Avaliado";
+                        alert("Avaliação enviada com sucesso!");
+                    } else {
+                        alert(data.mensagem);
+                    }
+                })
+                .catch(err => console.error("Erro ao enviar avaliação:", err));
+            }
+
+            function atualizarBotoesAvaliacao(){
+                //seleciona bts de av
+                const botoesAvaliacao = document.querySelectorAll("button[id^='botaoAv_']");
+
+                botoesAvaliacao.forEach(btn => {
+                    const id_agendamento = btn.id.replace("botaoAv_", "");
+                    const select = document.getElementById(`nota_${id_agendamento}`);
+
+                    fetch(`../phpAPIs/CR avaliacao/getAvaliacao.php?id_agendamento=${id_agendamento}`)
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.sucesso) {
+                                btn.disabled = true;
+                                btn.style.backgroundColor = "#A0A0A0";
+                                btn.textContent = "Avaliado";
+                                //pra mostrar a nota que foi enviada
+                                select.value = data.nota;
+                            }
+                        })
+                        .catch(err => console.error("Erro ao verificar avaliação:", err));
+                });
+            }
+
+            document.addEventListener("DOMContentLoaded", function () {
 
                 const navBarPerfil = document.getElementById("perfil");
                 const navBarAgenda = document.getElementById("agenda");
@@ -125,7 +167,7 @@
 
                 fetch("../phpAPIs/getInfoUsuario.php")
                     .then(response => response.json())
-                    .then( data => {
+                    .then(data => {
                         if (data.tipo_conta == "profissional") {
                             navBarNovoAgendamento.style.display = "none";
                             navBarPerfil.href = "../perfilProfissional/index.html";
@@ -135,61 +177,16 @@
                             navBarPerfil.href = "../perfilCliente/index.html";
                             navBarAgenda.href = "../telaPrincipalCliente/index.html";
                         }
+                        
+                        pegarAgendamentos(data.tipo_conta);
+                        
                     })
                     .catch(err => {
                         console.error("Erro no fetch:", err);
                     });
-                
-                pegarAgendamentos();
-                document.getElementById("btn_filtro").addEventListener("click", pegarAgendamentos);
-                document.getElementById("limpar").addEventListener("click", function() {
-                    document.getElementById("filtro").value = "";
-                    pegarAgendamentos();
-                });
+
             });
-
-            function confirmarAgendamento(id, botao) {
-                // desativa o botao imediatamente para evitar multiplos cliques
-                const situacao = document.getElementById(`Agendamento_${id}`);
-                botao.disabled = true;
-                botao.style.backgroundColor = "#A0A0A0"; // cinza
-                botao.textContent = "Confirmando...";
-
-                fetch(`../phpAPIs/CRUD agendamento/putAgendamento.php`, {
-                    method: "PUT",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({ id_agendamento: id, status: "Confirmado" })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.sucesso) {
-                        botao.textContent = "Confirmada"; // muda o texto
-                        botao.style.backgroundColor = "#A0A0A0"; // cinza
-                        botao.disabled = true; // mantem desativado
-                        console.log("Agendamento confirmado:", id);
-                        situacao.textContent = "Situação : Confirmado"
-                    } else {
-                        botao.disabled = false;
-                        botao.style.backgroundColor = "#392F5A"; // cor original
-                        botao.textContent = "Confirmar";
-                        alert("Erro ao confirmar: " + data.mensagem);
-                    }
-                })
-                .catch(err => {
-                    botao.disabled = false;
-                    botao.style.backgroundColor = "#392F5A";
-                    botao.textContent = "Confirmar";
-                    console.error("Erro na requisição:", err);
-                    alert("Erro ao confirmar o agendamento.");
-                });
-            }
-
-            function verDetalhes(id) {
-                window.location.href = `detalhesAgendamento.html?id=${id}`;
-            }
-
         </script>
+
     </body>
 </html>

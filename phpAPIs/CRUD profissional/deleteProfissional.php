@@ -18,16 +18,20 @@
 
     $agora = date('Y-m-d H:i:s');
 
-    //coloca cancelado nos agendamentos que o cliente parou de existir
-    $sql_cancelar_cliente = "
+    //cancelado em agendamentos que era de profissional que nao existe mais
+    $sql_cancelar_profissional = "
         UPDATE Agendamento
         SET status = 'Cancelado'
-        WHERE id_cliente = $id
+        WHERE id_profissional_servico IN (
+            SELECT id_profissional_servico
+            FROM Profissional_Servico
+            WHERE id_usuario_profissional = $id
+        )
         AND data_hora_inicio > '$agora'
     ";
 
-    mysqli_query($conn, $sql_cancelar_cliente);
-    
+    mysqli_query($conn, $sql_cancelar_profissional);
+
     $sql_delete = "DELETE FROM Usuario WHERE id_usuario = $id";
 
     if (mysqli_query($conn, $sql_delete)) {

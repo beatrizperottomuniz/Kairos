@@ -6,11 +6,11 @@
 
     <body>
         <header class="headerInterno">
-            <a href="#" class="linkPag">Exportar</a>
-            <a href="cadastrarProfissional/index.html" class="linkPag">Histórico</a>
-            <a href="#" class="linkPag">Agenda</a>
+            <a href="../exportarAgendamentos/index.html" class="linkPag">Exportar</a>
+            <a href="../historicoAgendamentos/index.html" class="linkPag">Histórico</a>
+            <a href="" id = "agenda" class="linkPag">Agenda</a>
             <a href="../NovoAgendamento/index.html" class="linkPag" id="novoAgendamento" style="display:none;">Novo Agendamento</a>
-            <a href="cadastrarCliente/index.html" class="linkPag">Perfil</a>
+            <a href="" id = "perfil" class="linkPag">Perfil</a>
         </header>
 
         <div class="divPrincipal">
@@ -27,15 +27,21 @@
         <script>
             document.addEventListener("DOMContentLoaded", function () {
                 const botaoDownload = document.getElementById("download");
+                const navBarPerfil = document.getElementById("perfil");
+                const navBarAgenda = document.getElementById("agenda");
                 const navBarNovoAgendamento = document.getElementById("novoAgendamento");
 
                 fetch("../phpAPIs/getInfoUsuario.php")
                     .then(response => response.json())
-                    .then(function(data) {
+                    .then( data => {
                         if (data.tipo_conta == "profissional") {
                             navBarNovoAgendamento.style.display = "none";
+                            navBarPerfil.href = "../perfilProfissional/index.html";
+                            navBarAgenda.href = "../telaPrincipalProfissional/index.html";
                         } else {
                             navBarNovoAgendamento.style.display = "block";
+                            navBarPerfil.href = "../perfilCliente/index.html";
+                            navBarAgenda.href = "../telaPrincipalCliente/index.html";
                         }
                     })
                     .catch(err => {
@@ -44,8 +50,8 @@
                 
 
                 botaoDownload.addEventListener("click", function () {
-                    // Chama diretamente o PHP responsável por gerar e enviar o CSV
-                    window.location.href = "../phpAPIs/usuarioAgendamentos.php";
+                    // chama PHP que gera e envia o CSV
+                    window.location.href = "../phpAPIs/exportarAgendamentos.php";
                 });
             });
         </script>
