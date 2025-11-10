@@ -9,6 +9,8 @@
 
         <div class="divPrincipal">
             <p class="textoTitulo">Perfil</p>
+            <p class="textoComum"><em>Exclusões, edições e novas informações só serão usadas a partir do momento que são salvas, exceto locais</em></p>
+            <p class="textoComum"><em>Ex:edições em disponibilidade não cancelam compromissos anteriormente firmados, mas locais serão alterados nos agendamentos já marcados</em></p>
 
             <div class="duplaBotoes">
                 <button class="botaoSubmit" id="salvar" style="margin-top: 5px;">Salvar informações principais</button>
@@ -29,6 +31,7 @@
 
             <p class="textoDestaque">Especialidade</p>
             <input type="text" class="campoInput" id="especialidade" placeholder="especialidade">
+            <hr>
 
             <p class="textoDestaque">Locais</p>
             <button class="botaoSubmit" id="adicionarLocal" style="margin-bottom: 10px;">Adicionar Local</button>
@@ -97,6 +100,16 @@
                             </li>
                         `;
                     });
+                    const botaoAdicionar = document.getElementById("adicionarLocal");
+                    if (data.dados.length > 0) {
+                        botaoAdicionar.disabled = true;
+                        botaoAdicionar.textContent = "Você já possui um local cadastrado";
+                        botaoAdicionar.style.opacity = "0.6";
+                    } else {
+                        botaoAdicionar.disabled = false;
+                        botaoAdicionar.textContent = "Adicionar local";
+                        botaoAdicionar.style.opacity = "1";
+                    }
                     html += "</ul>";
                     divLocais.innerHTML = html;
                 })
