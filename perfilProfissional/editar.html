@@ -2,6 +2,7 @@
     <head>
         <meta charset="UTF-8">
         <link rel="stylesheet" href="../style.css">
+
     </head>
 
     <body>
@@ -34,6 +35,21 @@
             <div id="locais">
                 <p>carregando...</p>
             </div>
+            <hr>
+
+            <div class="textoDestaque" style="margin-top:20px;">Disponibilidades</div>
+            <button class="botaoSubmit" id="adicionarDisponibilidade" style="margin-top: 10px; margin-bottom: 10px;">Adicionar Disponibilidade</button>
+            <div id="disponibilidades">
+                <p>carregando...</p>
+            </div>
+            <hr>
+
+            <div class="textoDestaque" style="margin-top:20px;">Disponibilidades Bloqueadas</div>
+            <button class="botaoSubmit" id="adicionarBloqueio" style="margin-top: 10px; margin-bottom: 10px;">Adicionar Bloqueio</button>
+            <div id="bloqueios">
+                <p>carregando...</p>
+            </div>
+            <hr>
 
         </div>
 
@@ -295,8 +311,330 @@
             });
 
             carregarLocais();
+            carregarDisponibilidades();
+            carregarBloqueios();
         });
+
+        function carregarDisponibilidades() {
+            fetch("../phpAPIs/CRUD disponibilidade/getDisponibilidade.php")
+                .then(r => r.json())
+                .then(data => {
+                    const container = document.getElementById("disponibilidades");
+                    container.innerHTML = "";
+                    if (!data.sucesso || !data.dados || data.dados.length === 0) {
+                        container.innerHTML = "<p>Nenhuma disponibilidade cadastrada.</p>";
+                        return;
+                    }
+                    let html = "<ul>";
+                    data.dados.forEach(d => {
+                        html += `
+                            <li data-id="${d.id_disponibilidade}">
+                                <div class="divAgendamento">
+                                    <div>
+                                        <p class="textoDestaque">Dia: ${escapeHTML(d.dia_semana)}</p>
+                                        <p class="textoComum">Inicio: ${escapeHTML(d.hora_inicio)}</p>
+                                        <p class="textoComum">Fim: ${escapeHTML(d.hora_fim)}</p>
+                                    </div>
+                                    <div class="duplaBotoesPaginasInternas">
+                                        <button class="botaoSubmit" onclick="editarDisponibilidade(${d.id_disponibilidade}, this)">Editar</button>
+                                        <button class="botaoSubmit" onclick="deletarDisponibilidade(${d.id_disponibilidade})">Excluir</button>
+                                    </div>
+                                </div>
+                            </li>
+                        `;
+                    });
+                    html += "</ul>";
+                    container.innerHTML = html;
+                })
+                .catch(err => {
+                    console.error(err);
+                    document.getElementById("disponibilidades").innerHTML = "<p>Erro ao carregar disponibilidades.</p>";
+                });
+        }
+
+        document.getElementById("adicionarDisponibilidade").addEventListener("click", () => {
+            if (document.getElementById("novoDisponibilidadeForm")) return;
+
+            const formHTML = `
+                <div class="divAgendamento" id="novoDisponibilidadeForm">
+                    <select id="novo_dia_semana" class="campoInput">
+                        <option value="" disabled selected>Selecione o dia</option>
+                        <option value="Domingo">Domingo</option>
+                        <option value="Segunda">Segunda</option>
+                        <option value="Terca">Terca</option>
+                        <option value="Quarta">Quarta</option>
+                        <option value="Quinta">Quinta</option>
+                        <option value="Sexta">Sexta</option>
+                        <option value="Sabado">Sabado</option>
+                    </select>
+                    <input type="time" id="novo_hora_inicio" class="campoInput" placeholder="Hora início">
+                    <input type="time" id="novo_hora_fim" class="campoInput" placeholder="Hora fim">
+                    <button class="botaoSubmit" onclick="salvarNovoDisponibilidade()">Salvar</button>
+                    <button class="botaoSubmit" onclick="cancelarNovoDisponibilidade()">Cancelar</button>
+                </div>
+            `;
+            document.getElementById("disponibilidades").insertAdjacentHTML("afterbegin", formHTML);
+        });
+
+        function cancelarNovoDisponibilidade() {
+            const f = document.getElementById("novoDisponibilidadeForm");
+            if (f) f.remove();
+        }
+
+        function salvarNovoDisponibilidade() {
+            const dia_semana = document.getElementById("novo_dia_semana").value || "";
+            const hora_inicio = document.getElementById("novo_hora_inicio").value || "";
+            const hora_fim = document.getElementById("novo_hora_fim").value || "";
+
+            if (!dia_semana || !hora_inicio || !hora_fim) return alert("Preencha dia e horários.");
+
+            fetch("../phpAPIs/CRUD disponibilidade/postDisponibilidade.php", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ dia_semana, hora_inicio, hora_fim })
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (res.sucesso) {
+                    alert("Disponibilidade adicionada!");
+                    carregarDisponibilidades();
+                } else alert("Erro: " + (res.mensagem || "Não foi possível adicionar."));
+            })
+            .catch(err => {
+                console.error(err);
+                alert("Erro ao adicionar disponibilidade.");
+            });
+        }
+
+        function editarDisponibilidade(id_disponibilidade, botao) {
+            const li = botao.closest("li");
+            const dados = {
+                dia: li.querySelector(".textoDestaque")?.textContent.split(":")[1]?.trim() || "",
+                inicio: li.querySelectorAll(".textoComum")[0]?.textContent.split(":")[1]?.trim() || "",
+                fim: li.querySelectorAll(".textoComum")[1]?.textContent.split(":")[1]?.trim() || ""
+            };
+
+            li.innerHTML = `
+                <div class="divAgendamento">
+                    <select id="dia_${id_disponibilidade}" class="campoInput">
+                        <option value="Domingo" ${dados.dia==="Domingo"?"selected":""}>Domingo</option>
+                        <option value="Segunda" ${dados.dia==="Segunda"?"selected":""}>Segunda</option>
+                        <option value="Terca" ${dados.dia==="Terca"?"selected":""}>Terca</option>
+                        <option value="Quarta" ${dados.dia==="Quarta"?"selected":""}>Quarta</option>
+                        <option value="Quinta" ${dados.dia==="Quinta"?"selected":""}>Quinta</option>
+                        <option value="Sexta" ${dados.dia==="Sexta"?"selected":""}>Sexta</option>
+                        <option value="Sabado" ${dados.dia==="Sabado"?"selected":""}>Sabado</option>
+                    </select>
+                    <input type="time" id="inicio_${id_disponibilidade}" class="campoInput" value="${dados.inicio || ''}">
+                    <input type="time" id="fim_${id_disponibilidade}" class="campoInput" value="${dados.fim || ''}">
+                    <button class="botaoSubmit" onclick="salvarEdicaoDisponibilidade(${id_disponibilidade})">Salvar</button>
+                    <button class="botaoSubmit" onclick="carregarDisponibilidades()">Cancelar</button>
+                </div>
+            `;
+        }
+
+        function salvarEdicaoDisponibilidade(id_disponibilidade) {
+            const dia_semana = document.getElementById(`dia_${id_disponibilidade}`).value || "";
+            const hora_inicio = document.getElementById(`inicio_${id_disponibilidade}`).value || "";
+            const hora_fim = document.getElementById(`fim_${id_disponibilidade}`).value || "";
+
+            if (!dia_semana || !hora_inicio || !hora_fim) return alert("Preencha dia e horários.");
+
+            fetch("../phpAPIs/CRUD disponibilidade/putDisponibilidade.php", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id_disponibilidade, dia_semana, hora_inicio, hora_fim })
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (res.sucesso) {
+                    alert("Disponibilidade atualizada!");
+                    carregarDisponibilidades();
+                } else alert("Erro: " + (res.mensagem || "Não foi possível atualizar."));
+            })
+            .catch(err => {
+                console.error(err);
+                alert("Erro ao atualizar disponibilidade.");
+            });
+        }
+
+        function deletarDisponibilidade(id_disponibilidade) {
+            if (!confirm("Tem certeza que deseja excluir esta disponibilidade?")) return;
+            fetch("../phpAPIs/CRUD disponibilidade/deleteDisponibilidade.php", {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id_disponibilidade })
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (res.sucesso) {
+                    alert("Disponibilidade excluída!");
+                    carregarDisponibilidades();
+                } else alert("Erro: " + (res.mensagem || "Não foi possível excluir."));
+            })
+            .catch(err => {
+                console.error(err);
+                alert("Erro ao excluir disponibilidade.");
+            });
+        }
+
+        function carregarBloqueios() {
+            fetch("../phpAPIs/CRUD disponibilidade_bloqueada/getBloqueio.php")
+                .then(r => r.json())
+                .then(data => {
+                    const container = document.getElementById("bloqueios");
+                    container.innerHTML = "";
+                    if (!data.sucesso || !data.dados || data.dados.length === 0) {
+                        container.innerHTML = "<p>Nenhum bloqueio cadastrado.</p>";
+                        return;
+                    }
+                    let html = "<ul>";
+                    data.dados.forEach(b => {
+                        html += `
+                            <li data-id="${b.id_bloqueio}">
+                                <div class="divAgendamento">
+                                    <div>
+                                        <p class="textoDestaque">Início: ${escapeHTML(b.data_inicio)}</p>
+                                        <p class="textoComum">Fim: ${escapeHTML(b.data_fim)}</p>
+                                    </div>
+                                    <div class="duplaBotoesPaginasInternas">
+                                        <button class="botaoSubmit" onclick="editarBloqueio(${b.id_bloqueio}, this)">Editar</button>
+                                        <button class="botaoSubmit" onclick="deletarBloqueio(${b.id_bloqueio})">Excluir</button>
+                                    </div>
+                                </div>
+                            </li>
+                        `;
+                    });
+                    html += "</ul>";
+                    container.innerHTML = html;
+                })
+                .catch(err => {
+                    console.error(err);
+                    document.getElementById("bloqueios").innerHTML = "<p>Erro ao carregar bloqueios.</p>";
+                });
+        }
+
+        document.getElementById("adicionarBloqueio").addEventListener("click", () => {
+            if (document.getElementById("novoBloqueioForm")) return;
+
+            const formHTML = `
+                <div class="divAgendamento" id="novoBloqueioForm">
+                    <label class="textoComum">Início</label>
+                    <input type="datetime-local" id="novo_data_inicio" class="campoInput">
+                    <label class="textoComum">Fim</label>
+                    <input type="datetime-local" id="novo_data_fim" class="campoInput">
+                    <button class="botaoSubmit" onclick="salvarNovoBloqueio()">Salvar</button>
+                    <button class="botaoSubmit" onclick="cancelarNovoBloqueio()">Cancelar</button>
+                </div>
+            `;
+            document.getElementById("bloqueios").insertAdjacentHTML("afterbegin", formHTML);
+        });
+
+        function cancelarNovoBloqueio() {
+            const f = document.getElementById("novoBloqueioForm");
+            if (f) f.remove();
+        }
+
+        function salvarNovoBloqueio() {
+            const data_inicio = document.getElementById("novo_data_inicio").value || "";
+            const data_fim = document.getElementById("novo_data_fim").value || "";
+
+            if (!data_inicio || !data_fim) return alert("Preencha data/hora de início e fim.");
+
+            const d1 = data_inicio.replace("T", " ") + ":00";
+            const d2 = data_fim.replace("T", " ") + ":00";
+
+            fetch("../phpAPIs/CRUD disponibilidade_bloqueada/postBloqueio.php", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ data_inicio: d1, data_fim: d2 })
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (res.sucesso) {
+                    alert("Bloqueio adicionado!");
+                    carregarBloqueios();
+                } else alert("Erro: " + (res.mensagem || "Não foi possível adicionar."));
+            })
+            .catch(err => {
+                console.error(err);
+                alert("Erro ao adicionar bloqueio.");
+            });
+        }
+
+        function editarBloqueio(id_bloqueio, botao) {
+            const li = botao.closest("li");
+            const inicio = li.querySelector(".textoDestaque")?.textContent.split(":")[1]?.trim() || "";
+            const fim = li.querySelectorAll(".textoComum")[0]?.textContent.split(":")[1]?.trim() || "";
+
+            function toInputDatetime(s) {
+                if (!s) return "";
+                return s.replace(" ", "T").slice(0,16);
+            }
+
+            li.innerHTML = `
+                <div class="divAgendamento">
+                    <input type="datetime-local" id="inicio_b_${id_bloqueio}" class="campoInput" value="${toInputDatetime(inicio)}">
+                    <input type="datetime-local" id="fim_b_${id_bloqueio}" class="campoInput" value="${toInputDatetime(fim)}">
+                    <button class="botaoSubmit" onclick="salvarEdicaoBloqueio(${id_bloqueio})">Salvar</button>
+                    <button class="botaoSubmit" onclick="carregarBloqueios()">Cancelar</button>
+                </div>
+            `;
+        }
+
+        function salvarEdicaoBloqueio(id_bloqueio) {
+            const data_inicio_raw = document.getElementById(`inicio_b_${id_bloqueio}`).value || "";
+            const data_fim_raw = document.getElementById(`fim_b_${id_bloqueio}`).value || "";
+
+            if (!data_inicio_raw || !data_fim_raw) return alert("Preencha início e fim.");
+
+            const data_inicio = data_inicio_raw.replace("T", " ") + ":00";
+            const data_fim = data_fim_raw.replace("T", " ") + ":00";
+
+            fetch("../phpAPIs/CRUD disponibilidade_bloqueada/putBloqueio.php", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id_bloqueio, data_inicio, data_fim })
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (res.sucesso) {
+                    alert("Bloqueio atualizado!");
+                    carregarBloqueios();
+                } else alert("Erro: " + (res.mensagem || "Não foi possível atualizar."));
+            })
+            .catch(err => {
+                console.error(err);
+                alert("Erro ao atualizar bloqueio.");
+            });
+        }
+
+        function deletarBloqueio(id_bloqueio) {
+            if (!confirm("Tem certeza que deseja excluir este bloqueio?")) return;
+            fetch("../phpAPIs/CRUD disponibilidade_bloqueada/deleteBloqueio.php", {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id_bloqueio })
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (res.sucesso) {
+                    alert("Bloqueio excluído!");
+                    carregarBloqueios();
+                } else alert("Erro: " + (res.mensagem || "Não foi possível excluir."));
+            })
+            .catch(err => {
+                console.error(err);
+                alert("Erro ao excluir bloqueio.");
+            });
+        }
+
+
+
         </script>
     </body>
 </html>
+
+
+
 
