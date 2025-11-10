@@ -49,7 +49,7 @@
                         const agendamentosFiltrados = data.agendamentos.filter(ag => {
                             const dataInicio = new Date(ag.data_hora_inicio);
                             const agendamentoData = new Date(dataInicio.getFullYear(), dataInicio.getMonth(), dataInicio.getDate());
-                            return agendamentoData < hojeData;
+                            return (agendamentoData < hojeData) || (ag.status == "Concluido");
                         });
 
                         let html = '<ul>';

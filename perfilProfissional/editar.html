@@ -262,6 +262,13 @@
                 const biografia = document.getElementById("biografia").value.trim();
                 const especialidade = document.getElementById("especialidade").value.trim();
 
+                const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+                if (!emailValido) {
+                    alert("Por favor, insira um e-mail válido.");
+                    return;
+                }
+
                 if (!nome || !email || !senha) {
                     alert("Preencha nome, email e senha.");
                     return;
