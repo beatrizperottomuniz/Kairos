@@ -250,7 +250,7 @@
             });
         }
 
-        // carrega perfil e locais
+        // carrega perfil e locais, disp e bloqueios
         document.addEventListener("DOMContentLoaded", () => {
             fetch("../phpAPIs/CRUD profissional/getProfissional.php")
                 .then(response => response.json())
@@ -408,11 +408,17 @@
 
         function editarDisponibilidade(id_disponibilidade, botao) {
             const li = botao.closest("li");
-            const dados = {
-                dia: li.querySelector(".textoDestaque")?.textContent.split(":")[1]?.trim() || "",
-                inicio: li.querySelectorAll(".textoComum")[0]?.textContent.split(":")[1]?.trim() || "",
-                fim: li.querySelectorAll(".textoComum")[1]?.textContent.split(":")[1]?.trim() || ""
-            };
+            const campos = li.querySelectorAll("p");
+            const dados = {};
+
+            campos.forEach(p => {
+                const texto = p.textContent.split(": ");
+                let chave = texto[0].trim().toLowerCase();
+                const valor = texto[1]?.trim() || "";
+                dados[chave] = valor;
+            });
+
+            console.log(dados);
 
             li.innerHTML = `
                 <div class="divAgendamento">
@@ -563,19 +569,24 @@
         }
 
         function editarBloqueio(id_bloqueio, botao) {
-            const li = botao.closest("li");
-            const inicio = li.querySelector(".textoDestaque")?.textContent.split(":")[1]?.trim() || "";
-            const fim = li.querySelectorAll(".textoComum")[0]?.textContent.split(":")[1]?.trim() || "";
 
-            function toInputDatetime(s) {
-                if (!s) return "";
-                return s.replace(" ", "T").slice(0,16);
-            }
+            const li = botao.closest("li");
+            const campos = li.querySelectorAll("p");
+            const dados = {};
+
+            campos.forEach(p => {
+                const texto = p.textContent.split(": ");
+                let chave = texto[0].trim().toLowerCase();
+                const valor = texto[1]?.trim() || "";
+                dados[chave] = valor;
+            });
+
+            console.log(dados);
 
             li.innerHTML = `
                 <div class="divAgendamento">
-                    <input type="datetime-local" id="inicio_b_${id_bloqueio}" class="campoInput" value="${toInputDatetime(inicio)}">
-                    <input type="datetime-local" id="fim_b_${id_bloqueio}" class="campoInput" value="${toInputDatetime(fim)}">
+                    <input type="datetime-local" id="inicio_b_${id_bloqueio}" class="campoInput" value="${dados.início}">
+                    <input type="datetime-local" id="fim_b_${id_bloqueio}" class="campoInput" value="${dados.fim}">
                     <button class="botaoSubmit" onclick="salvarEdicaoBloqueio(${id_bloqueio})">Salvar</button>
                     <button class="botaoSubmit" onclick="carregarBloqueios()">Cancelar</button>
                 </div>
